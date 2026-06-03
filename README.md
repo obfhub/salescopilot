@@ -57,6 +57,9 @@ npm run dev
 - Server-side repository layer for lead/settings reads.
 - Server actions for pipeline stage updates, notes, tasks, and settings.
 - Workspace membership and role checks for database reads and writes.
+- Lead capture form at `/capture` and JSON ingestion endpoint at `/api/leads`.
+- Optional OpenAI lead analysis via `OPENAI_API_KEY`, with mock AI fallback.
+- Optional manager notification emails via `LEAD_NOTIFICATION_EMAIL`.
 - Dynamic Next.js pages that can read from Postgres in production.
 - Mock fallback when `DATABASE_URL` is missing, so the demo remains usable.
 
@@ -73,9 +76,6 @@ For launch, replace the demo identity lookup in `lib/auth.ts` with Clerk, Auth.j
 
 ## Still Needed Before Real Launch
 
-- Real authentication and workspace authorization.
-- Row-level permission checks in every mutation.
-- Real AI provider integration and prompt/cost logging.
-- Telegram/WhatsApp/Facebook/web form ingestion webhooks.
 - Stripe checkout, subscription portal, and usage limits.
-- Error tracking, analytics, audit log UI, and automated tests.
+- Telegram/WhatsApp/Facebook webhook integrations.
+- Sentry/PostHog, audit log UI, and automated tests.

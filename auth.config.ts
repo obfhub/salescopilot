@@ -1,6 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 
-const appRoutes = ["/", "/pipeline", "/simulator", "/settings", "/leads"];
+const appRoutes = ["/", "/pipeline", "/capture", "/simulator", "/settings", "/leads"];
 const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 export const authConfig = {

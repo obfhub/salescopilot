@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { BarChart3, Bot, Kanban, LayoutDashboard, LogOut, Settings, Sparkles } from "lucide-react";
+import { BarChart3, Bot, Inbox, Kanban, LayoutDashboard, LogOut, Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
+  { href: "/capture", label: "Capture", icon: Inbox },
   { href: "/simulator", label: "Simulator", icon: Bot },
   { href: "/settings", label: "Settings", icon: Settings }
 ];
