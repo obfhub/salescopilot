@@ -1,7 +1,19 @@
 import { PipelineClient } from "@/components/pipeline-client";
-import { databaseConfigured, getLeads } from "@/lib/lead-store";
+import { mockLeads } from "@/lib/mock-data";
+
+export const dynamic = "force-dynamic";
 
 export default async function PipelinePage() {
-  const leads = await getLeads();
-  return <PipelineClient initialLeads={leads} databaseReady={databaseConfigured()} />;
+  let leads = mockLeads;
+  let databaseReady = Boolean(process.env.DATABASE_URL);
+
+  try {
+    const store = await import("@/lib/lead-store");
+    leads = await store.getLeads();
+    databaseReady = store.databaseConfigured();
+  } catch (error) {
+    console.error("Pipeline data load failed. Rendering mock leads.", error);
+  }
+
+  return <PipelineClient initialLeads={leads} databaseReady={databaseReady} />;
 }
