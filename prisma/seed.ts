@@ -55,6 +55,21 @@ async function main() {
     create: { workspaceId: workspace.id, userId: alex.id, role: "manager" }
   });
 
+  const demoEmail = process.env.DEMO_USER_EMAIL;
+  if (demoEmail && demoEmail !== sarah.email && demoEmail !== alex.email) {
+    const demoUser = await prisma.user.upsert({
+      where: { email: demoEmail },
+      update: {},
+      create: { name: demoEmail.split("@")[0], email: demoEmail }
+    });
+
+    await prisma.workspaceMember.upsert({
+      where: { workspaceId_userId: { workspaceId: workspace.id, userId: demoUser.id } },
+      update: { role: "owner" },
+      create: { workspaceId: workspace.id, userId: demoUser.id, role: "owner" }
+    });
+  }
+
   for (const lead of mockLeads) {
     const assignedUserId = lead.assignedManager === "Sarah Mitchell" ? sarah.id : alex.id;
 
