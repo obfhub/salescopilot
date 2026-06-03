@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/input";
 import { ProbabilityBar } from "@/components/progress-ring";
 import { useToast } from "@/components/toast-provider";
+import { updateLeadStage } from "@/app/actions";
 
 export function PipelineClient({ initialLeads, databaseReady }: { initialLeads: Lead[]; databaseReady: boolean }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
@@ -27,10 +28,23 @@ export function PipelineClient({ initialLeads, databaseReady }: { initialLeads: 
   );
 
   function changeStage(id: string, stage: PipelineStage) {
+    const previous = leads.find((lead) => lead.id === id)?.pipelineStage;
     setLeads((current) => current.map((lead) => (lead.id === id ? { ...lead, pipelineStage: stage } : lead)));
 
+    if (!databaseReady) {
+      notify("Configure DATABASE_URL to persist pipeline changes");
+      return;
+    }
+
     startTransition(async () => {
-      notify(databaseReady ? "Pipeline stage updated locally" : "Configure DATABASE_URL to persist pipeline changes");
+      try {
+        const result = await updateLeadStage({ leadSlug: id, stage });
+        notify(result.persisted ? "Pipeline stage saved" : "Pipeline stage updated locally");
+      } catch (error) {
+        console.error("Failed to persist pipeline stage change.", error);
+        notify("Could not save stage. Reverting change.");
+        setLeads((current) => current.map((lead) => (lead.id === id && previous ? { ...lead, pipelineStage: previous } : lead)));
+      }
     });
   }
 
