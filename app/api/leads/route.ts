@@ -4,7 +4,13 @@ import { createCapturedLead } from "@/lib/lead-ingestion";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ ok: false, error: "Invalid JSON request body." }, { status: 400 });
+    }
+
     const result = await createCapturedLead(body);
 
     return NextResponse.json({
