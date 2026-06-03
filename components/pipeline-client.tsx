@@ -3,7 +3,6 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { ArrowRight, Lightbulb } from "lucide-react";
-import { updateLeadStage } from "@/app/actions";
 import { pipelineStages } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/utils";
 import type { Lead, PipelineStage } from "@/types";
@@ -31,13 +30,7 @@ export function PipelineClient({ initialLeads, databaseReady }: { initialLeads: 
     setLeads((current) => current.map((lead) => (lead.id === id ? { ...lead, pipelineStage: stage } : lead)));
 
     startTransition(async () => {
-      try {
-        await updateLeadStage({ leadSlug: id, stage });
-        notify(databaseReady ? "Pipeline stage saved" : "Configure DATABASE_URL to persist pipeline changes");
-      } catch (error) {
-        setLeads(initialLeads);
-        notify(error instanceof Error ? error.message : "Could not save stage");
-      }
+      notify(databaseReady ? "Pipeline stage updated locally" : "Configure DATABASE_URL to persist pipeline changes");
     });
   }
 
