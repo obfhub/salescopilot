@@ -38,31 +38,41 @@ export async function updateLeadStage(input: unknown) {
   const data = stageSchema.parse(input);
   if (!databaseConfigured()) return { persisted: false };
 
-  const auth = await requireWorkspaceAccess("sales");
-  const lead = await prisma.lead.findFirstOrThrow({
-    where: { workspaceId: auth.workspaceId, slug: data.leadSlug }
-  });
+  try {
+    const auth = await requireWorkspaceAccess("sales");
+    const lead = await prisma.lead.findFirst({
+      where: { workspaceId: auth.workspaceId, slug: data.leadSlug }
+    });
 
-  const nextStage = stageToDb(data.stage as Parameters<typeof stageToDb>[0]);
-  await prisma.$transaction([
-    prisma.lead.update({
-      where: { id: lead.id },
-      data: { pipelineStage: nextStage }
-    }),
-    prisma.pipelineEvent.create({
-      data: {
-        leadId: lead.id,
-        userId: auth.userId,
-        fromStage: lead.pipelineStage,
-        toStage: nextStage
-      }
-    })
-  ]);
+    if (!lead) {
+      console.warn(`Lead ${data.leadSlug} not found in database. Skipping persistence.`);
+      return { persisted: false };
+    }
 
-  revalidatePath("/");
-  revalidatePath("/pipeline");
-  revalidatePath(`/leads/${data.leadSlug}`);
-  return { persisted: true };
+    const nextStage = stageToDb(data.stage as Parameters<typeof stageToDb>[0]);
+    await prisma.$transaction([
+      prisma.lead.update({
+        where: { id: lead.id },
+        data: { pipelineStage: nextStage }
+      }),
+      prisma.pipelineEvent.create({
+        data: {
+          leadId: lead.id,
+          userId: auth.userId,
+          fromStage: lead.pipelineStage,
+          toStage: nextStage
+        }
+      })
+    ]);
+
+    revalidatePath("/");
+    revalidatePath("/pipeline");
+    revalidatePath(`/leads/${data.leadSlug}`);
+    return { persisted: true };
+  } catch (error) {
+    console.error("Failed to persist lead stage change.", error);
+    return { persisted: false };
+  }
 }
 
 export async function addLeadNote(input: unknown) {
