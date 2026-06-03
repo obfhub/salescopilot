@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadSource {
+  Telegram
+  Instagram
+  Website
+  Facebook
+  Referral
+  Manual
+  WhatsApp
+}
+
+enum LeadStatus {
+  New
+  Contacted
+  Qualified
+  Won
+  Lost
+  Waiting
+}
+
+enum PipelineStage {
+  NewLead
+  Qualification
+  Presentation
+  Proposal
+  Negotiation
+  Payment
+  Closed
+  Lost
+}
+
+enum Temperature {
+  Hot
+  Warm
+  Cold
+}
+
+enum MessageType {
+  customer
+  manager
+  ai
+}
+
+enum WorkspaceRole {
+  owner
+  admin
+  manager
+  sales
+}
+
+model Workspace {
+  id            String             @id @default(cuid())
+  name          String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  members       WorkspaceMember[]
+  leads         Lead[]
+  settings      WorkspaceSetting?
+  integrations  Integration[]
+  usageEvents   UsageEvent[]
+  subscriptions Subscription[]
+}
+
+model User {
+  id            String            @id @default(cuid())
+  name          String
+  email         String            @unique
+  imageUrl      String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  memberships   WorkspaceMember[]
+  assignedLeads Lead[]            @relation("AssignedLeads")
+  notes         LeadNote[]
+  events        PipelineEvent[]
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(sales)
+  createdAt   DateTime      @default(now())
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+model Lead {
+  id                  String          @id @default(cuid())
+  slug                String
+  workspaceId         String
+  assignedUserId      String?
+  name                String
+  company             String
+  position            String
+  email               String
+  phone               String
+  source              LeadSource
+  status              LeadStatus
+  pipelineStage       PipelineStage
+  interest            String
+  temperature         Temperature
+  purchaseProbability Int
+  dealValue           Int
+  lastMessage         String
+  lastContactDate     DateTime
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  workspace           Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignedUser        User?           @relation("AssignedLeads", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  messages            LeadMessage[]
+  analysis            AiAnalysis?
+  tasks               LeadTask[]
+  notes               LeadNote[]
+  events              PipelineEvent[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, pipelineStage])
+  @@index([workspaceId, status])
+  @@index([workspaceId, purchaseProbability])
+}
+
+model LeadMessage {
+  id        String      @id @default(cuid())
+  leadId    String
+  author    String
+  sentAt    DateTime
+  type      MessageType
+  text      String
+  createdAt DateTime    @default(now())
+  lead      Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, sentAt])
+}
+
+model AiAnalysis {
+  id                String        @id @default(cuid())
+  leadId            String        @unique
+  customerType      String
+  intent            String
+  interestLevel     String
+  urgency           String
+  budgetReadiness   String
+  mainNeed          String
+  painPoint         String
+  objection         String
+  lossRisk          String
+  recommendedStage  PipelineStage
+  nextBestAction    String
+  confidence        Int
+  summary           String
+  reply             String
+  replyShort        String
+  replyProfessional String
+  replySales        String
+  replyClosing      String
+  modelProvider     String        @default("mock")
+  promptVersion     String        @default("mock-v1")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  lead              Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model LeadTask {
+  id          String    @id @default(cuid())
+  leadId      String
+  label       String
+  completed   Boolean   @default(false)
+  dueAt       DateTime?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, completed])
+}
+
+model LeadNote {
+  id        String   @id @default(cuid())
+  leadId    String
+  authorId  String?
+  text      String
+  createdAt DateTime @default(now())
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, createdAt])
+}
+
+model PipelineEvent {
+  id        String         @id @default(cuid())
+  leadId    String
+  userId    String?
+  fromStage PipelineStage?
+  toStage   PipelineStage
+  createdAt DateTime       @default(now())
+  lead      Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, createdAt])
+}
+
+model WorkspaceSetting {
+  id            String    @id @default(cuid())
+  workspaceId   String    @unique
+  companyName   String
+  managerName   String
+  replyTone     String
+  currency      String
+  language      String
+  telegramToken String?
+  supabaseUrl   String?
+  claudeApiKey  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Integration {
+  id          String    @id @default(cuid())
+  workspaceId String
+  provider    String
+  status      String    @default("disabled")
+  config      Json?
+  lastSyncAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, provider])
+}
+
+model UsageEvent {
+  id          String    @id @default(cuid())
+  workspaceId String
+  type        String
+  quantity    Int       @default(1)
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, type, createdAt])
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  workspaceId           String
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?   @unique
+  plan                  String    @default("trial")
+  status                String    @default("trialing")
+  currentPeriodEnd      DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  workspace             Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
