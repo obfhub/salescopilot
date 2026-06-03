@@ -39,7 +39,7 @@ export function PipelineClient({ initialLeads, databaseReady }: { initialLeads: 
     startTransition(async () => {
       try {
         const result = await updateLeadStage({ leadSlug: id, stage });
-        notify(result.persisted ? "Pipeline stage saved" : "Pipeline stage updated locally");
+        notify(result.persisted ? "Pipeline stage saved" : `Not saved: ${result.reason ?? "unknown reason"}`);
       } catch (error) {
         console.error("Failed to persist pipeline stage change.", error);
         notify("Could not save stage. Reverting change.");

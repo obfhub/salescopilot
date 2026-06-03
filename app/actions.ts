@@ -36,7 +36,7 @@ const settingsSchema = z.object({
 
 export async function updateLeadStage(input: unknown) {
   const data = stageSchema.parse(input);
-  if (!databaseConfigured()) return { persisted: false };
+  if (!databaseConfigured()) return { persisted: false, reason: "DATABASE_URL not configured" };
 
   try {
     const auth = await requireWorkspaceAccess("sales");
@@ -46,7 +46,7 @@ export async function updateLeadStage(input: unknown) {
 
     if (!lead) {
       console.warn(`Lead ${data.leadSlug} not found in database. Skipping persistence.`);
-      return { persisted: false };
+      return { persisted: false, reason: `Lead "${data.leadSlug}" not found in workspace "${auth.workspaceId}"` };
     }
 
     const nextStage = stageToDb(data.stage as Parameters<typeof stageToDb>[0]);
@@ -70,8 +70,9 @@ export async function updateLeadStage(input: unknown) {
     revalidatePath(`/leads/${data.leadSlug}`);
     return { persisted: true };
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error("Failed to persist lead stage change.", error);
-    return { persisted: false };
+    return { persisted: false, reason: message };
   }
 }
 
