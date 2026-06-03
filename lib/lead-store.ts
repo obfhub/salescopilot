@@ -101,26 +101,36 @@ function mapLead(row: NonNullDbLead): Lead {
 export async function getLeads(): Promise<Lead[]> {
   noStore();
   if (!databaseConfigured()) return mockLeads;
-  const auth = await requireWorkspaceAccess("sales");
 
-  const rows = await prisma.lead.findMany({
-    where: { workspaceId: auth.workspaceId },
-    include: leadInclude,
-    orderBy: { purchaseProbability: "desc" }
-  });
+  try {
+    const auth = await requireWorkspaceAccess("sales");
+    const rows = await prisma.lead.findMany({
+      where: { workspaceId: auth.workspaceId },
+      include: leadInclude,
+      orderBy: { purchaseProbability: "desc" }
+    });
 
-  return rows.map(mapLead);
+    return rows.map(mapLead);
+  } catch (error) {
+    console.error("Database lead list read failed. Falling back to mock data.", error);
+    return mockLeads;
+  }
 }
 
 export async function getLeadBySlug(slug: string): Promise<Lead | undefined> {
   noStore();
   if (!databaseConfigured()) return mockLeads.find((lead) => lead.id === slug);
-  const auth = await requireWorkspaceAccess("sales");
 
-  const row = await prisma.lead.findFirst({
-    where: { workspaceId: auth.workspaceId, slug },
-    include: leadInclude
-  });
+  try {
+    const auth = await requireWorkspaceAccess("sales");
+    const row = await prisma.lead.findFirst({
+      where: { workspaceId: auth.workspaceId, slug },
+      include: leadInclude
+    });
 
-  return row ? mapLead(row) : undefined;
+    return row ? mapLead(row) : undefined;
+  } catch (error) {
+    console.error(`Database lead read failed for ${slug}. Falling back to mock data.`, error);
+    return mockLeads.find((lead) => lead.id === slug);
+  }
 }

@@ -18,22 +18,27 @@ export const defaultSettings: Settings = {
 export async function getSettings(): Promise<Settings> {
   noStore();
   if (!databaseConfigured()) return defaultSettings;
-  const auth = await requireWorkspaceAccess("sales");
 
-  const settings = await prisma.workspaceSetting.findUnique({
-    where: { workspaceId: auth.workspaceId }
-  });
+  try {
+    const auth = await requireWorkspaceAccess("sales");
+    const settings = await prisma.workspaceSetting.findUnique({
+      where: { workspaceId: auth.workspaceId }
+    });
 
-  if (!settings) return defaultSettings;
+    if (!settings) return defaultSettings;
 
-  return {
-    companyName: settings.companyName,
-    managerName: settings.managerName,
-    replyTone: settings.replyTone as Settings["replyTone"],
-    currency: settings.currency,
-    language: settings.language,
-    telegramToken: settings.telegramToken ?? "",
-    supabaseUrl: settings.supabaseUrl ?? "",
-    claudeApiKey: settings.claudeApiKey ?? ""
-  };
+    return {
+      companyName: settings.companyName,
+      managerName: settings.managerName,
+      replyTone: settings.replyTone as Settings["replyTone"],
+      currency: settings.currency,
+      language: settings.language,
+      telegramToken: settings.telegramToken ?? "",
+      supabaseUrl: settings.supabaseUrl ?? "",
+      claudeApiKey: settings.claudeApiKey ?? ""
+    };
+  } catch (error) {
+    console.error("Database settings read failed. Falling back to defaults.", error);
+    return defaultSettings;
+  }
 }
