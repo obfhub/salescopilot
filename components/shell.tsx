@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bot, Kanban, LayoutDashboard, Settings, Sparkles } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import { BarChart3, Bot, Kanban, LayoutDashboard, LogOut, Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -13,8 +14,26 @@ const nav = [
   { href: "/settings", label: "Settings", icon: Settings }
 ];
 
+const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
+
+function initialsFrom(value: string) {
+  const parts = value.trim().split(/\s+/).slice(0, 2);
+  if (parts.length === 0) return "U";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const isAuthRoute = authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+  if (isAuthRoute) {
+    return <>{children}</>;
+  }
+
+  const displayName = session?.user?.name || session?.user?.email || "Account";
+  const initials = initialsFrom(displayName);
 
   return (
     <div className="min-h-screen lg:flex">
@@ -65,9 +84,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-3">
             <Badge tone="green">AI Copilot active</Badge>
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-cyan-300 to-fuchsia-400 text-sm font-bold text-slate-950">
-              SM
+            <div className="hidden text-right sm:block">
+              <div className="text-sm font-semibold text-white">{displayName}</div>
+              {session?.user?.email ? <div className="text-xs text-slate-400">{session.user.email}</div> : null}
             </div>
+            <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-cyan-300 to-fuchsia-400 text-sm font-bold text-slate-950">
+              {initials}
+            </div>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              aria-label="Sign out"
+              className="grid h-10 w-10 place-items-center rounded-lg border border-line text-slate-300 transition hover:bg-white/8 hover:text-white"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </header>
         <div className="px-4 py-6 sm:px-6 lg:px-8">{children}</div>

@@ -1,0 +1,147 @@
+"use server";
+
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { getRequestedWorkspaceId } from "@/lib/auth";
+import { sendPasswordResetEmail } from "@/lib/email";
+
+const registerSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(80),
+  email: z.string().trim().email("Enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(100)
+});
+
+const requestResetSchema = z.object({
+  email: z.string().trim().email("Enter a valid email")
+});
+
+const resetSchema = z.object({
+  token: z.string().min(1, "Invalid reset link"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(100)
+});
+
+type ActionResult = { ok: boolean; error?: string; message?: string };
+
+function getBaseUrl() {
+  return (
+    process.env.AUTH_URL ||
+    process.env.NEXTAUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+  );
+}
+
+export async function registerUser(input: unknown): Promise<ActionResult> {
+  if (!process.env.DATABASE_URL) {
+    return { ok: false, error: "Database is not configured." };
+  }
+
+  const parsed = registerSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const { name, email, password } = parsed.data;
+  const normalizedEmail = email.toLowerCase();
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (existing) {
+      return { ok: false, error: "An account with this email already exists." };
+    }
+
+    const hashed = await bcrypt.hash(password, 12);
+    const workspaceId = getRequestedWorkspaceId();
+
+    const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+
+    const user = await prisma.user.create({
+      data: { name, email: normalizedEmail, password: hashed }
+    });
+
+    if (workspace) {
+      await prisma.workspaceMember.create({
+        data: { workspaceId: workspace.id, userId: user.id, role: "sales" }
+      });
+    }
+
+    return { ok: true, message: "Account created. You can now sign in." };
+  } catch (error) {
+    console.error("registerUser failed.", error);
+    return { ok: false, error: "Could not create account. Please try again." };
+  }
+}
+
+export async function requestPasswordReset(input: unknown): Promise<ActionResult> {
+  const parsed = requestResetSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid email." };
+  }
+
+  const successMessage = "If an account exists for that email, a reset link is on its way.";
+
+  if (!process.env.DATABASE_URL) {
+    return { ok: true, message: successMessage };
+  }
+
+  const email = parsed.data.email.toLowerCase();
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return { ok: true, message: successMessage };
+    }
+
+    await prisma.passwordResetToken.deleteMany({ where: { email } });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 60 * 60 * 1000);
+
+    await prisma.passwordResetToken.create({ data: { email, token, expires } });
+
+    const resetUrl = `${getBaseUrl()}/reset-password?token=${token}`;
+    await sendPasswordResetEmail(email, resetUrl);
+
+    return { ok: true, message: successMessage };
+  } catch (error) {
+    console.error("requestPasswordReset failed.", error);
+    return { ok: true, message: successMessage };
+  }
+}
+
+export async function resetPassword(input: unknown): Promise<ActionResult> {
+  if (!process.env.DATABASE_URL) {
+    return { ok: false, error: "Database is not configured." };
+  }
+
+  const parsed = resetSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const { token, password } = parsed.data;
+
+  try {
+    const record = await prisma.passwordResetToken.findUnique({ where: { token } });
+    if (!record || record.expires < new Date()) {
+      if (record) {
+        await prisma.passwordResetToken.delete({ where: { token } }).catch(() => undefined);
+      }
+      return { ok: false, error: "This reset link is invalid or has expired." };
+    }
+
+    const hashed = await bcrypt.hash(password, 12);
+    await prisma.user.update({
+      where: { email: record.email },
+      data: { password: hashed }
+    });
+
+    await prisma.passwordResetToken.deleteMany({ where: { email: record.email } });
+
+    return { ok: true, message: "Password updated. You can now sign in." };
+  } catch (error) {
+    console.error("resetPassword failed.", error);
+    return { ok: false, error: "Could not reset password. Please try again." };
+  }
+}

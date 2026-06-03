@@ -1,8 +1,11 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { mockLeads } from "../lib/mock-data";
 import { messageTypeToDb, sourceToDb, stageToDb, statusToDb, temperatureToDb } from "../lib/db-mapping";
 
 const prisma = new PrismaClient();
+
+const DEMO_PASSWORD = "password123";
 
 async function main() {
   const workspace = await prisma.workspace.upsert({
@@ -31,16 +34,18 @@ async function main() {
     }
   });
 
+  const demoPasswordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+
   const sarah = await prisma.user.upsert({
     where: { email: "sarah.mitchell@example.com" },
-    update: { name: "Sarah Mitchell" },
-    create: { name: "Sarah Mitchell", email: "sarah.mitchell@example.com" }
+    update: { name: "Sarah Mitchell", password: demoPasswordHash },
+    create: { name: "Sarah Mitchell", email: "sarah.mitchell@example.com", password: demoPasswordHash }
   });
 
   const alex = await prisma.user.upsert({
     where: { email: "alex.morgan@example.com" },
-    update: { name: "Alex Morgan" },
-    create: { name: "Alex Morgan", email: "alex.morgan@example.com" }
+    update: { name: "Alex Morgan", password: demoPasswordHash },
+    create: { name: "Alex Morgan", email: "alex.morgan@example.com", password: demoPasswordHash }
   });
 
   await prisma.workspaceMember.upsert({
@@ -59,8 +64,8 @@ async function main() {
   if (demoEmail && demoEmail !== sarah.email && demoEmail !== alex.email) {
     const demoUser = await prisma.user.upsert({
       where: { email: demoEmail },
-      update: {},
-      create: { name: demoEmail.split("@")[0], email: demoEmail }
+      update: { password: demoPasswordHash },
+      create: { name: demoEmail.split("@")[0], email: demoEmail, password: demoPasswordHash }
     });
 
     await prisma.workspaceMember.upsert({

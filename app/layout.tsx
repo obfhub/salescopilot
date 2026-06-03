@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 import { Shell } from "@/components/shell";
 import { ToastProvider } from "@/components/toast-provider";
@@ -12,9 +13,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <ToastProvider>
-          <Shell>{children}</Shell>
-        </ToastProvider>
+        <SessionProvider>
+          <ToastProvider>
+            <Shell>{children}</Shell>
+          </ToastProvider>
+        </SessionProvider>
       </body>
     </html>
   );
