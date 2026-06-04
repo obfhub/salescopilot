@@ -48,14 +48,16 @@ async function findOrCreateLead(
 
   const { name, phone } = parseLeadNameFromMessage(text || "");
 
+  const orConditions = [
+    { slug },
+    { name: { contains: firstName, mode: "insensitive" } },
+    ...(phone ? [{ phone }] : [])
+  ];
+
   let lead = await prisma.lead.findFirst({
     where: {
       workspaceId,
-      OR: [
-        { slug },
-        { name: { contains: firstName, mode: "insensitive" } },
-        phone ? { phone } : undefined
-      ].filter(Boolean)
+      ...(orConditions.length > 0 ? { OR: orConditions } : {})
     }
   });
 
