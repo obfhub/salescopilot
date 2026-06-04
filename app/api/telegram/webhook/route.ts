@@ -2,8 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getRequestedWorkspaceId } from "@/lib/auth";
 
 export async function HEAD() {
-  console.log("[Telegram] HEAD request received - webhook is accessible");
-  return Response.json({ ok: true });
+  console.log("[Telegram] HEAD request - webhook is accessible");
+  return new Response(null, { status: 200 });
 }
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
