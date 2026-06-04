@@ -73,7 +73,7 @@ async function findOrCreateLead(
         phone: phone || "",
         source: "Telegram",
         status: "New",
-        pipelineStage: "New Lead",
+        pipelineStage: "NewLead",
         interest: "",
         temperature: "Warm",
         purchaseProbability: 50,
