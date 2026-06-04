@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertTriangle, Save, MessageCircle, Loader2 } from "lucide-react";
+import { AlertTriangle, Building2, Copy, Save, MessageCircle, Loader2 } from "lucide-react";
 import { saveWorkspaceSettings } from "@/app/actions";
 import { registerTelegramWebhook } from "@/app/auth-actions";
 import type { Settings } from "@/types";
@@ -10,7 +10,15 @@ import { Card } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
 import { useToast } from "@/components/toast-provider";
 
-export function SettingsClient({ initialSettings, databaseReady }: { initialSettings: Settings; databaseReady: boolean }) {
+export function SettingsClient({
+  initialSettings,
+  databaseReady,
+  companyId
+}: {
+  initialSettings: Settings;
+  databaseReady: boolean;
+  companyId: string;
+}) {
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [isPending, startTransition] = useTransition();
   const [isTelegramLoading, setIsTelegramLoading] = useState(false);
@@ -29,6 +37,12 @@ export function SettingsClient({ initialSettings, databaseReady }: { initialSett
         notify(error instanceof Error ? error.message : "Could not save settings");
       }
     });
+  }
+
+  function copyCompanyId() {
+    if (!companyId) return;
+    navigator.clipboard.writeText(companyId);
+    notify("Company ID copied");
   }
 
   function setupTelegram() {
@@ -69,6 +83,25 @@ export function SettingsClient({ initialSettings, databaseReady }: { initialSett
         </div>
         Add your provider credentials before turning on external integrations.
       </div>
+
+      <Card>
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <div className="mb-1 flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-cyan-300" />
+              <h2 className="text-lg font-bold text-white">Company Account</h2>
+            </div>
+            <p className="text-sm text-slate-400">Share this Company ID with employees so they can join this workspace during registration.</p>
+          </div>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
+          <Input readOnly value={companyId || "Sign in to view your Company ID"} />
+          <Button variant="secondary" disabled={!companyId} onClick={copyCompanyId}>
+            <Copy className="h-4 w-4" />
+            Copy Company ID
+          </Button>
+        </div>
+      </Card>
 
       <Card>
         <div className="grid gap-4 md:grid-cols-2">

@@ -8,7 +8,7 @@ export default function RegisterPage() {
   return (
     <AuthCard
       title="Create your account"
-      subtitle="Start guiding your pipeline with AI in minutes."
+      subtitle="Create a company workspace or join your team's existing account."
       footer={
         <>
           Already have an account?{" "}

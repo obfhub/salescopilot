@@ -8,8 +8,10 @@ import { getRequestedWorkspaceId } from "@/lib/auth";
 import { sendPasswordResetEmail } from "@/lib/email";
 
 const registerSchema = z.object({
+  mode: z.enum(["create-company", "join-company"]).default("create-company"),
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(80),
-  companyName: z.string().trim().min(2, "Company name must be at least 2 characters").max(120),
+  companyName: z.string().trim().max(120).optional().default(""),
+  companyCode: z.string().trim().max(120).optional().default(""),
   role: z.string().trim().min(2, "Role must be at least 2 characters").max(120),
   email: z.string().trim().email("Enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters").max(100)
@@ -44,7 +46,7 @@ export async function registerUser(input: unknown): Promise<ActionResult> {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const { name, companyName, role, email, password } = parsed.data;
+  const { mode, name, companyName, companyCode, role, email, password } = parsed.data;
   const normalizedEmail = email.toLowerCase();
 
   try {
@@ -54,6 +56,38 @@ export async function registerUser(input: unknown): Promise<ActionResult> {
     }
 
     const hashed = await bcrypt.hash(password, 12);
+
+    if (mode === "join-company") {
+      if (!companyCode) {
+        return { ok: false, error: "Enter the Company ID from your workspace administrator." };
+      }
+
+      const workspace = await prisma.workspace.findUnique({ where: { id: companyCode } });
+      if (!workspace) {
+        return { ok: false, error: "Company account not found. Check the Company ID and try again." };
+      }
+
+      await prisma.user.create({
+        data: {
+          name,
+          email: normalizedEmail,
+          password: hashed,
+          memberships: {
+            create: {
+              role: "sales",
+              workspaceId: workspace.id
+            }
+          }
+        }
+      });
+
+      return { ok: true, message: `Joined ${workspace.name}. You can now sign in.` };
+    }
+
+    const cleanCompanyName = companyName.trim();
+    if (cleanCompanyName.length < 2) {
+      return { ok: false, error: "Company name must be at least 2 characters." };
+    }
 
     await prisma.user.create({
       data: {
@@ -65,10 +99,10 @@ export async function registerUser(input: unknown): Promise<ActionResult> {
             role: "owner",
             workspace: {
               create: {
-                name: companyName,
+                name: cleanCompanyName,
                 settings: {
                   create: {
-                    companyName,
+                    companyName: cleanCompanyName,
                     managerName: name,
                     replyTone: "professional",
                     currency: "USD",
@@ -79,8 +113,7 @@ export async function registerUser(input: unknown): Promise<ActionResult> {
                   create: [
                     { provider: "telegram", status: "disabled" },
                     { provider: "whatsapp", status: "disabled" },
-                    { provider: "openai", status: "disabled" },
-                    { provider: "stripe", status: "disabled" }
+                    { provider: "openai", status: "disabled" }
                   ]
                 }
               }
