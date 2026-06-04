@@ -16,12 +16,12 @@ export async function POST(request: Request) {
     console.log("[Telegram] POST received");
     const update: TelegramUpdate = await request.json();
 
-    if (!update.message?.text || !update.message?.from || update.message.from.is_bot) {
-      console.log("[Telegram] Skipping - no text, no from, or is bot");
+    const msg = update.message;
+    if (!msg?.text || !msg?.from?.first_name || msg.from.is_bot) {
+      console.log("[Telegram] Skipping - invalid message");
       return Response.json({ ok: true });
     }
 
-    const msg = update.message;
     console.log(`[Telegram] Processing: ${msg.from.first_name} - ${msg.text}`);
 
     // Get workspace
