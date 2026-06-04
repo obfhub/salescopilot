@@ -39,6 +39,18 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
           opportunity: data.opportunity,
           replyOptions: data.replyOptions,
           confidence: data.confidence,
+          customerType: "prospect",
+          intent: data.opportunity || "Unknown",
+          interestLevel: "Medium",
+          urgency: "Medium",
+          budgetReadiness: "Unknown",
+          mainNeed: data.summary,
+          painPoint: "Unknown",
+          objection: "Unknown",
+          lossRisk: "Low",
+          recommendedStage: "New Lead",
+          nextBestAction: "Follow up",
+          reply: data.replyOptions?.professional || "",
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
@@ -52,6 +64,18 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
             brief: "Interested. Let's talk soon."
           },
           confidence: 50,
+          customerType: "prospect",
+          intent: "Unknown",
+          interestLevel: "Medium",
+          urgency: "Medium",
+          budgetReadiness: "Unknown",
+          mainNeed: "Unknown",
+          painPoint: "Unknown",
+          objection: "Unknown",
+          lossRisk: "Low",
+          recommendedStage: "New Lead",
+          nextBestAction: "Follow up",
+          reply: "",
         });
       } finally {
         setIsLoading(false);
