@@ -78,14 +78,16 @@ export async function requireWorkspaceAccess(minRole: WorkspaceRole = "sales"): 
     throw new Error("Not authenticated. Please sign in to continue.");
   }
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      workspaceId_userId: {
-        workspaceId: getRequestedWorkspaceId(),
-        userId: user.id
-      }
-    }
-  });
+  const requestedWorkspaceId = getRequestedWorkspaceId();
+  const membership =
+    (await prisma.workspaceMember.findFirst({
+      where: { userId: user.id, workspaceId: { not: requestedWorkspaceId } },
+      orderBy: { createdAt: "asc" }
+    })) ??
+    (await prisma.workspaceMember.findFirst({
+      where: { userId: user.id, workspaceId: requestedWorkspaceId },
+      orderBy: { createdAt: "asc" }
+    }));
 
   if (!membership) {
     throw new Error("Current user is not a member of this workspace.");

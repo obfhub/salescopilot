@@ -59,7 +59,7 @@ export function SettingsClient({ initialSettings, databaseReady }: { initialSett
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-white">Settings</h1>
-        <p className="mt-2 text-sm text-slate-300">Configure the sales workspace and production integration placeholders.</p>
+        <p className="mt-2 text-sm text-slate-300">Configure your real sales workspace, reply style, and integrations.</p>
       </div>
 
       <div className="rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 text-sm text-amber-50">
@@ -67,18 +67,18 @@ export function SettingsClient({ initialSettings, databaseReady }: { initialSett
           <AlertTriangle className="h-4 w-4" />
           Integrations are disabled until provider credentials and webhooks are configured.
         </div>
-        Database persistence is ready when `DATABASE_URL` is set and the Prisma schema has been pushed.
+        Add your provider credentials before turning on external integrations.
       </div>
 
       <Card>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2 text-sm text-slate-300">
             <span>Company name</span>
-            <Input value={settings.companyName} onChange={(event) => update("companyName", event.target.value)} />
+            <Input placeholder="Your company" value={settings.companyName} onChange={(event) => update("companyName", event.target.value)} />
           </label>
           <label className="space-y-2 text-sm text-slate-300">
             <span>Sales manager name</span>
-            <Input value={settings.managerName} onChange={(event) => update("managerName", event.target.value)} />
+            <Input placeholder="Your name" value={settings.managerName} onChange={(event) => update("managerName", event.target.value)} />
           </label>
           <label className="space-y-2 text-sm text-slate-300">
             <span>Reply tone</span>

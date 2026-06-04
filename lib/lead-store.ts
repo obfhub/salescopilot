@@ -33,9 +33,39 @@ function formatTime(date: Date) {
   }).format(date);
 }
 
+function firstSentence(value: string) {
+  return value.split(/(?<=[.!?])\s+/)[0]?.trim() || value;
+}
+
+function mapReplyOptions(analysis: NonNullDbLead["analysis"]) {
+  if (!analysis) return undefined;
+
+  const hasAiMainReply = analysis.modelProvider === "openai" && analysis.reply.trim().length > 0;
+  const professionalLooksGeneric =
+    analysis.replyProfessional.includes("Connect incoming messages and sales tools into one assisted workflow") ||
+    analysis.replyProfessional.includes("Reduce manual follow-up and respond faster to leads");
+
+  if (hasAiMainReply && professionalLooksGeneric) {
+    return {
+      short: firstSentence(analysis.reply),
+      professional: analysis.reply,
+      sales: `${analysis.reply} If this sounds right, we can turn it into a clear next step today.`,
+      closing: `${analysis.reply} Would you like to confirm scope, timeline, and budget now?`
+    };
+  }
+
+  return {
+    short: analysis.replyShort,
+    professional: analysis.replyProfessional,
+    sales: analysis.replySales,
+    closing: analysis.replyClosing
+  };
+}
+
 function mapLead(row: NonNullDbLead): Lead {
   const analysis = row.analysis;
   const fallbackAnalysis = analyzeMessage(row.lastMessage);
+  const replyOptions = mapReplyOptions(analysis);
 
   return {
     id: row.slug,
@@ -77,12 +107,8 @@ function mapLead(row: NonNullDbLead): Lead {
           confidence: analysis.confidence,
           summary: analysis.summary,
           reply: analysis.reply,
-          replyOptions: {
-            short: analysis.replyShort,
-            professional: analysis.replyProfessional,
-            sales: analysis.replySales,
-            closing: analysis.replyClosing
-          }
+          provider: analysis.modelProvider === "openai" ? "openai" : "mock",
+          replyOptions: replyOptions ?? fallbackAnalysis.replyOptions
         }
       : fallbackAnalysis,
     tasks: row.tasks.map<Task>((task) => ({

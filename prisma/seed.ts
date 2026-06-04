@@ -8,14 +8,14 @@ const DEMO_PASSWORD = "password123";
 async function main() {
   const workspace = await prisma.workspace.upsert({
     where: { id: process.env.DEMO_WORKSPACE_ID || "demo-workspace" },
-    update: { name: "Apex Revenue Systems" },
+    update: { name: "Demo Workspace" },
     create: {
       id: process.env.DEMO_WORKSPACE_ID || "demo-workspace",
-      name: "Apex Revenue Systems",
+      name: "Demo Workspace",
       settings: {
         create: {
-          companyName: "Apex Revenue Systems",
-          managerName: "Sarah Mitchell",
+          companyName: "Demo Workspace",
+          managerName: "Demo Manager",
           replyTone: "professional",
           currency: "USD",
           language: "English"
@@ -73,7 +73,7 @@ async function main() {
     });
   }
 
-  console.log(`Seeded workspace ${workspace.id} with users and settings.`);
+  console.log(`Seeded workspace ${workspace.id} with demo users and settings.`);
 }
 
 main()

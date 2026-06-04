@@ -25,9 +25,9 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
   const [tasks, setTasks] = useState<Task[]>(lead?.tasks ?? []);
   const [isPending, startTransition] = useTransition();
   
-  // Use real AI analysis
-  const { analysis, isLoading: aiLoading, error: aiError } = useAiAnalysis(
-    lead ? {
+  const hasSavedLiveAnalysis = lead?.aiAnalysis.provider === "openai";
+  const { analysis: refreshedAnalysis, isLoading: aiLoading, error: aiError } = useAiAnalysis(
+    lead && !hasSavedLiveAnalysis ? {
       leadName: lead.name,
       company: lead.company,
       position: lead.position,
@@ -36,9 +36,10 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
       lastMessage: lead.lastMessage,
     } : undefined
   );
+  const analysis = refreshedAnalysis ?? lead?.aiAnalysis ?? null;
   
   const [replyOptions, setReplyOptions] = useState<AiAnalysis["replyOptions"] | undefined>(
-    analysis?.replyOptions ?? lead?.aiAnalysis.replyOptions
+    lead?.aiAnalysis.replyOptions
   );
   const dashboardHref = isDemoMode ? "/?demo=1" : "/";
 

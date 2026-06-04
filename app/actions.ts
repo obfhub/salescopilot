@@ -136,6 +136,11 @@ export async function saveWorkspaceSettings(input: unknown) {
     }
   });
 
+  await prisma.workspace.update({
+    where: { id: auth.workspaceId },
+    data: { name: data.companyName }
+  });
+
   revalidatePath("/settings");
   return { persisted: true };
 }

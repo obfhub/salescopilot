@@ -9,6 +9,8 @@ import { sendPasswordResetEmail } from "@/lib/email";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(80),
+  companyName: z.string().trim().min(2, "Company name must be at least 2 characters").max(120),
+  role: z.string().trim().min(2, "Role must be at least 2 characters").max(120),
   email: z.string().trim().email("Enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters").max(100)
 });
@@ -42,7 +44,7 @@ export async function registerUser(input: unknown): Promise<ActionResult> {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const { name, email, password } = parsed.data;
+  const { name, companyName, role, email, password } = parsed.data;
   const normalizedEmail = email.toLowerCase();
 
   try {
@@ -52,19 +54,41 @@ export async function registerUser(input: unknown): Promise<ActionResult> {
     }
 
     const hashed = await bcrypt.hash(password, 12);
-    const workspaceId = getRequestedWorkspaceId();
 
-    const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
-
-    const user = await prisma.user.create({
-      data: { name, email: normalizedEmail, password: hashed }
+    await prisma.user.create({
+      data: {
+        name,
+        email: normalizedEmail,
+        password: hashed,
+        memberships: {
+          create: {
+            role: "owner",
+            workspace: {
+              create: {
+                name: companyName,
+                settings: {
+                  create: {
+                    companyName,
+                    managerName: name,
+                    replyTone: "professional",
+                    currency: "USD",
+                    language: "English"
+                  }
+                },
+                integrations: {
+                  create: [
+                    { provider: "telegram", status: "disabled" },
+                    { provider: "whatsapp", status: "disabled" },
+                    { provider: "openai", status: "disabled" },
+                    { provider: "stripe", status: "disabled" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     });
-
-    if (workspace) {
-      await prisma.workspaceMember.create({
-        data: { workspaceId: workspace.id, userId: user.id, role: "sales" }
-      });
-    }
 
     return { ok: true, message: "Account created. You can now sign in." };
   } catch (error) {

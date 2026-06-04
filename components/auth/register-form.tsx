@@ -17,11 +17,13 @@ export function RegisterForm() {
     setError("");
     const formData = new FormData(event.currentTarget);
     const name = String(formData.get("name") ?? "");
+    const companyName = String(formData.get("companyName") ?? "");
+    const role = String(formData.get("role") ?? "");
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
 
     startTransition(async () => {
-      const result = await registerUser({ name, email, password });
+      const result = await registerUser({ name, companyName, role, email, password });
       if (!result.ok) {
         setError(result.error ?? "Could not create account.");
         return;
@@ -41,6 +43,8 @@ export function RegisterForm() {
     <form onSubmit={onSubmit} className="space-y-4">
       {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
       <AuthField label="Full name" name="name" type="text" autoComplete="name" placeholder="Jane Cooper" required />
+      <AuthField label="Company name" name="companyName" type="text" autoComplete="organization" placeholder="Your company" required />
+      <AuthField label="Your role" name="role" type="text" autoComplete="organization-title" placeholder="Sales manager" required />
       <AuthField label="Email" name="email" type="email" autoComplete="email" placeholder="you@company.com" required />
       <AuthField label="Password" name="password" type="password" autoComplete="new-password" placeholder="At least 8 characters" required minLength={8} />
 

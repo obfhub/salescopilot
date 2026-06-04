@@ -5,8 +5,8 @@ import { databaseConfigured } from "@/lib/lead-store";
 import { requireWorkspaceAccess } from "@/lib/auth";
 
 export const defaultSettings: Settings = {
-  companyName: "Apex Revenue Systems",
-  managerName: "Sarah Mitchell",
+  companyName: "",
+  managerName: "",
   replyTone: "professional",
   currency: "USD",
   language: "English",
