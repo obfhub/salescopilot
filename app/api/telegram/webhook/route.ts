@@ -13,87 +13,96 @@ type TelegramUpdate = {
 
 export async function POST(request: Request) {
   try {
-    console.log("[Telegram] POST received");
     const update: TelegramUpdate = await request.json();
 
     const msg = update.message;
     if (!msg?.text || !msg?.from?.first_name || msg.from.is_bot) {
-      console.log("[Telegram] Skipping - invalid message");
       return Response.json({ ok: true });
     }
-
-    console.log(`[Telegram] Processing: ${msg.from.first_name} - ${msg.text}`);
 
     // Get workspace
-    const workspace = await prisma.workspace.findFirst();
-    if (!workspace) {
-      console.log("[Telegram] No workspace");
+    let workspace;
+    try {
+      workspace = await prisma.workspace.findFirst();
+    } catch (err) {
+      console.error("[Telegram] DB error:", err);
       return Response.json({ ok: true });
     }
 
-    // Create/find lead
+    if (!workspace) {
+      return Response.json({ ok: true });
+    }
+
+    // Create lead
     const fullName = msg.from.last_name 
       ? `${msg.from.first_name} ${msg.from.last_name}` 
       : msg.from.first_name;
     const slug = fullName.toLowerCase().replace(/\s+/g, "-");
 
-    let lead = await prisma.lead.findFirst({
-      where: { workspaceId: workspace.id, slug },
-    });
+    let lead;
+    try {
+      lead = await prisma.lead.findFirst({
+        where: { workspaceId: workspace.id, slug },
+      });
 
-    if (!lead) {
-      lead = await prisma.lead.create({
+      if (!lead) {
+        lead = await prisma.lead.create({
+          data: {
+            workspaceId: workspace.id,
+            slug,
+            name: fullName,
+            company: "",
+            position: "",
+            email: "",
+            phone: "",
+            source: "Telegram",
+            status: "New",
+            pipelineStage: "NewLead",
+            interest: "",
+            temperature: "Warm",
+            purchaseProbability: 50,
+            dealValue: 0,
+            lastMessage: msg.text,
+            lastContactDate: new Date(msg.date * 1000),
+          },
+        });
+      }
+    } catch (err) {
+      console.error("[Telegram] Lead error:", err);
+      return Response.json({ ok: true });
+    }
+
+    // Save message
+    try {
+      await prisma.leadMessage.create({
         data: {
-          workspaceId: workspace.id,
-          slug,
-          name: fullName,
-          company: "",
-          position: "",
-          email: "",
-          phone: "",
-          source: "Telegram",
-          status: "New",
-          pipelineStage: "NewLead",
-          interest: "",
-          temperature: "Warm",
-          purchaseProbability: 50,
-          dealValue: 0,
+          leadId: lead.id,
+          author: fullName,
+          sentAt: new Date(msg.date * 1000),
+          type: "customer",
+          text: msg.text,
+        },
+      });
+    } catch (err) {
+      console.error("[Telegram] Message error:", err);
+    }
+
+    // Update lead
+    try {
+      await prisma.lead.update({
+        where: { id: lead.id },
+        data: {
           lastMessage: msg.text,
           lastContactDate: new Date(msg.date * 1000),
         },
       });
-      console.log(`[Telegram] Created lead: ${lead.id}`);
-    } else {
-      console.log(`[Telegram] Found existing lead: ${lead.id}`);
+    } catch (err) {
+      console.error("[Telegram] Update error:", err);
     }
 
-    // Save message
-    await prisma.leadMessage.create({
-      data: {
-        leadId: lead.id,
-        author: fullName,
-        sentAt: new Date(msg.date * 1000),
-        type: "customer",
-        text: msg.text,
-      },
-    });
-
-    // Update lead
-    await prisma.lead.update({
-      where: { id: lead.id },
-      data: {
-        lastMessage: msg.text,
-        lastContactDate: new Date(msg.date * 1000),
-      },
-    });
-
-    console.log("[Telegram] Success");
     return Response.json({ ok: true });
   } catch (error) {
     console.error("[Telegram] Error:", error);
-    return Response.json(
-      { ok: false, error: String(error) },
-      { status: 500 }
-    );
+    return Response.json({ ok: false, error: String(error) }, { status: 500 });
   }
 }
