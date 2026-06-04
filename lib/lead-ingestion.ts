@@ -14,8 +14,19 @@ export const leadCaptureSchema = z.object({
   phone: z.string().trim().max(40).optional().default(""),
   source: z.enum(["Telegram", "Instagram", "Website", "Facebook", "Referral", "Manual", "WhatsApp"]).default("Manual"),
   interest: z.string().trim().min(2).max(160).default("Sales automation"),
-  message: z.string().trim().min(10).max(4000),
-  dealValue: z.coerce.number().int().min(0).max(10000000).optional().default(0)
+  message: z.string().trim().min(10).max(12000),
+  dealValue: z.coerce.number().int().min(0).max(10000000).optional().default(0),
+  messages: z
+    .array(
+      z.object({
+        type: z.enum(["customer", "manager"]),
+        author: z.string().trim().min(1).max(120),
+        text: z.string().trim().min(1).max(4000)
+      })
+    )
+    .max(60)
+    .optional()
+    .default([])
 });
 
 function slugify(value: string) {
@@ -58,6 +69,16 @@ export async function createCapturedLead(input: unknown) {
   const assignee = (await prisma.user.findUnique({ where: { id: auth.userId } })) ?? (await getDefaultAssignee(workspaceId));
   const stage = analysis.recommendedStage;
   const now = new Date();
+  const conversationMessages =
+    data.messages.length > 0
+      ? data.messages.map((message, index) => ({
+          author: message.author,
+          sentAt: new Date(now.getTime() + index),
+          type: message.type,
+          text: message.text
+        }))
+      : [{ author: data.name, sentAt: now, type: "customer" as const, text: data.message }];
+  const lastCustomerMessage = [...data.messages].reverse().find((message) => message.type === "customer")?.text ?? data.message;
 
   const lead = await prisma.lead.create({
     data: {
@@ -76,11 +97,11 @@ export async function createCapturedLead(input: unknown) {
       temperature: temperatureToDb(analysis.temperature),
       purchaseProbability: analysis.score,
       dealValue: data.dealValue,
-      lastMessage: data.message,
+      lastMessage: lastCustomerMessage,
       lastContactDate: now,
       messages: {
         create: [
-          { author: data.name, sentAt: now, type: "customer", text: data.message },
+          ...conversationMessages,
           { author: "AI Sales Copilot", sentAt: now, type: "ai", text: analysis.summary }
         ]
       },
