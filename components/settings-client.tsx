@@ -99,19 +99,7 @@ export function SettingsClient({ initialSettings, databaseReady }: { initialSett
           </label>
           <label className="space-y-2 text-sm text-slate-300">
             <span>Interface language</span>
-            <Input value={settings.language} onChange={(event) => update("language", event.target.value)} />
-          </label>
-          <label className="space-y-2 text-sm text-slate-300">
-            <span>Telegram Bot Token placeholder</span>
-            <Input placeholder="Server-side secret in production" value={settings.telegramToken} onChange={(event) => update("telegramToken", event.target.value)} />
-          </label>
-          <label className="space-y-2 text-sm text-slate-300">
-            <span>Supabase URL placeholder</span>
-            <Input placeholder="Optional external integration" value={settings.supabaseUrl} onChange={(event) => update("supabaseUrl", event.target.value)} />
-          </label>
-          <label className="space-y-2 text-sm text-slate-300">
-            <span>Claude API Key placeholder</span>
-            <Input placeholder="Store server-side only" value={settings.claudeApiKey} onChange={(event) => update("claudeApiKey", event.target.value)} />
+            <Input autoComplete="off" value={settings.language} onChange={(event) => update("language", event.target.value)} />
           </label>
         </div>
         <div className="mt-6">
@@ -140,6 +128,12 @@ export function SettingsClient({ initialSettings, databaseReady }: { initialSett
             <span className="font-semibold">Bot Token</span>
             <Input
               type="password"
+              name="telegram-bot-token"
+              id="telegram-bot-token"
+              autoComplete="new-password"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              spellCheck={false}
               placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
               value={settings.telegramToken}
               onChange={(event) => update("telegramToken", event.target.value)}
@@ -171,6 +165,45 @@ export function SettingsClient({ initialSettings, databaseReady }: { initialSett
             <li>New leads are auto-created if no match found</li>
             <li>Messages appear in the lead detail view</li>
           </ol>
+        </div>
+      </Card>
+
+      <Card>
+        <div>
+          <h3 className="text-lg font-bold text-white">Optional Provider Settings</h3>
+          <p className="mt-1 text-sm text-slate-400">These values are optional and are not used for login.</p>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <label className="space-y-2 text-sm text-slate-300">
+            <span>Supabase project URL</span>
+            <Input
+              name="supabase-project-url"
+              id="supabase-project-url"
+              type="url"
+              inputMode="url"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              placeholder="https://your-project.supabase.co"
+              value={settings.supabaseUrl}
+              onChange={(event) => update("supabaseUrl", event.target.value)}
+            />
+          </label>
+          <label className="space-y-2 text-sm text-slate-300">
+            <span>Claude provider key</span>
+            <Input
+              name="provider-secret-token"
+              id="provider-secret-token"
+              type="password"
+              autoComplete="new-password"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              spellCheck={false}
+              placeholder="sk-..."
+              value={settings.claudeApiKey}
+              onChange={(event) => update("claudeApiKey", event.target.value)}
+            />
+          </label>
         </div>
       </Card>
     </div>
