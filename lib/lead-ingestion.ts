@@ -102,10 +102,10 @@ export async function createCapturedLead(input: unknown) {
           confidence: analysis.confidence,
           summary: analysis.summary,
           reply: analysis.reply,
-          replyShort: analysis.replyOptions.short,
-          replyProfessional: analysis.replyOptions.professional,
-          replySales: analysis.replyOptions.sales,
-          replyClosing: analysis.replyOptions.closing,
+          replyShort: analysis.replyOptions?.short ?? "",
+          replyProfessional: analysis.replyOptions?.professional ?? "",
+          replySales: analysis.replyOptions?.sales ?? "",
+          replyClosing: analysis.replyOptions?.closing ?? "",
           modelProvider: analysis.provider,
           promptVersion: analysis.provider === "openai" ? "openai-v1" : "mock-v1"
         }
