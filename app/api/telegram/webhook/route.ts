@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { getRequestedWorkspaceId } from "@/lib/auth";
 
+export async function HEAD() {
+  console.log("[Telegram] HEAD request received - webhook is accessible");
+  return Response.json({ ok: true });
+}
+
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 type TelegramMessage = {
@@ -115,11 +120,23 @@ export async function POST(request: Request) {
     let workspaceId: string;
     try {
       workspaceId = getRequestedWorkspaceId();
-      console.log(`[Telegram] Workspace ID: ${workspaceId}`);
+      console.log(`[Telegram] Workspace ID from context: ${workspaceId}`);
     } catch (err) {
-      console.error("[Telegram] Failed to get workspace ID:", err);
-      // Use a default workspace or return error
-      return Response.json({ ok: false, error: "No workspace found" }, { status: 400 });
+      console.error("[Telegram] Failed to get workspace ID from context:", err);
+      
+      // If no context, try to get the first workspace from database
+      try {
+        const workspace = await prisma.workspace.findFirst();
+        if (!workspace) {
+          console.error("[Telegram] No workspace found in database");
+          return Response.json({ ok: false, error: "No workspace found" }, { status: 400 });
+        }
+        workspaceId = workspace.id;
+        console.log(`[Telegram] Using first workspace: ${workspaceId}`);
+      } catch (dbErr) {
+        console.error("[Telegram] Database error finding workspace:", dbErr);
+        return Response.json({ ok: false, error: "Database error" }, { status: 500 });
+      }
     }
 
     const lead = await findOrCreateLead(
