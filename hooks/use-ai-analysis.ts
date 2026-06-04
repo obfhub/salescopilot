@@ -72,29 +72,7 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
         console.error("[AI Analysis] Error:", errorMessage);
         setError(errorMessage);
-        // Return mock data on error
-        setAnalysis({
-          summary: "Unable to generate analysis at this time.",
-          opportunity: "High potential opportunity",
-          replyOptions: {
-            professional: "Thank you for your interest. I'd like to discuss how we can help.",
-            casual: "Hey! Great to hear from you. Let's chat about how we can help.",
-            brief: "Interested. Let's talk soon."
-          },
-          confidence: 50,
-          customerType: "prospect",
-          intent: "Unknown",
-          interestLevel: "Medium",
-          urgency: "Medium",
-          budgetReadiness: "Unknown",
-          mainNeed: "Unknown",
-          painPoint: "Unknown",
-          objection: "Unknown",
-          lossRisk: "Low",
-          recommendedStage: "New Lead",
-          nextBestAction: "Follow up",
-          reply: "",
-        });
+        setAnalysis(null);
       } finally {
         setIsLoading(false);
       }

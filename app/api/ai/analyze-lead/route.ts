@@ -22,16 +22,7 @@ interface AnalysisResponse {
 
 async function generateAnalysis(lead: AnalysisRequest): Promise<AnalysisResponse> {
   if (!OPENAI_API_KEY) {
-    return {
-      summary: "AI analysis unavailable - configure OPENAI_API_KEY",
-      opportunity: "High potential opportunity",
-      replyOptions: {
-        professional: "Thank you for your interest. I'd like to discuss how our solution can help.",
-        casual: "Hey! Great to hear from you. Let's chat about how we can help.",
-        brief: "Interested. Let's talk soon."
-      },
-      confidence: 50
-    };
+    throw new Error("OPENAI_API_KEY not configured");
   }
 
   try {
@@ -110,16 +101,7 @@ Generate analysis and three reply options in the specified JSON format.`,
     };
   } catch (error) {
     console.error("[AI Analysis] Error:", error);
-    return {
-      summary: "Lead shows potential for engagement and collaboration based on company profile and recent interaction.",
-      opportunity: "High potential opportunity",
-      replyOptions: {
-        professional: "Thank you for reaching out. I'd love to schedule a brief call to understand your specific needs and discuss how our solution can add value to your organization.",
-        casual: "Hey! Thanks for getting in touch. Would be great to chat more about what you're working on and see if we can help!",
-        brief: "Thanks for the message - let's connect!"
-      },
-      confidence: 75
-    };
+    throw error;
   }
 }
 
