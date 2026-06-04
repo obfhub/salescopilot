@@ -236,12 +236,12 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
         </Card>
       </section>
 
-      <Card>
-        <h2 className="text-lg font-bold text-white">AI Reply Options</h2>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          {(Object.entries(replyOptions) as Array<[ReplyKey, string]>).map(([key, text]) => (
-            <div key={key} className="rounded-lg border border-line bg-white/5 p-4">
-              <div className="mb-3 text-sm font-bold capitalize text-white">{key === "sales" ? "Sales-focused" : key} reply</div>
+        <Card>
+          <h2 className="text-lg font-bold text-white">AI Reply Options</h2>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            {(Object.entries(replyOptions || {}).filter(([, text]) => text) as Array<[ReplyKey, string]>).map(([key, text]) => (
+              <div key={key} className="rounded-lg border border-line bg-white/5 p-4">
+                <div className="mb-3 text-sm font-bold capitalize text-white">{key === "sales" ? "Sales-focused" : key === "professional" ? "Professional" : key === "brief" ? "Brief" : key} reply</div>
               <p className="min-h-24 text-sm leading-6 text-slate-300">{text}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="secondary" onClick={() => copy(text)}>

@@ -55,11 +55,14 @@ export type AiAnalysis = {
   confidence: number;
   summary: string;
   reply: string;
+  opportunity?: string;
   replyOptions: {
-    short: string;
+    short?: string;
     professional: string;
-    sales: string;
-    closing: string;
+    sales?: string;
+    closing?: string;
+    casual?: string;
+    brief?: string;
   };
 };
 
