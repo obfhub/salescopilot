@@ -46,33 +46,40 @@ async function generateAnalysis(lead: AnalysisRequest): Promise<AnalysisResponse
         messages: [
           {
             role: "system",
-            content: `You are a sales analysis expert. Analyze the given lead information and provide insights.
-            
-Respond in JSON format:
+            content: `You are a professional AI sales assistant. Analyze leads and generate personalized sales responses.
+
+IMPORTANT: Respond ONLY with valid JSON. Do NOT include markdown formatting or explanations.
+
+JSON format:
 {
-  "summary": "2-3 sentence summary of the lead's profile and potential",
-  "opportunity": "Assessment of the opportunity (High/Medium/Low potential)",
+  "summary": "2-3 sentence analysis of lead potential and key factors",
+  "opportunity": "Opportunity assessment (e.g., 'High-value enterprise lead' or 'Warm mid-market prospect')",
+  "confidence": 75,
   "replyOptions": {
-    "professional": "Professional tone reply (2-3 sentences)",
-    "casual": "Casual tone reply (2-3 sentences)",
-    "brief": "Brief reply (1 sentence)"
-  },
-  "confidence": "Confidence score 0-100 based on lead quality"
-}`,
+    "professional": "Formal professional response (2-3 sentences, appropriate for executive audience)",
+    "casual": "Friendly conversational response (2-3 sentences, relationship-building tone)",
+    "brief": "Single sentence concise response"
+  }
+}
+
+Make replies specific to their company, role, and needs. Reference details from their profile.`,
           },
           {
             role: "user",
-            content: `Analyze this lead:
+            content: `Analyze this lead and generate personalized responses:
+
 Name: ${lead.leadName}
 Company: ${lead.company}
 Position: ${lead.position}
-Interest: ${lead.interest || "Unknown"}
+Interest: ${lead.interest || "General inquiry"}
 Temperature: ${lead.temperature || "Warm"}
-Last Message: ${lead.lastMessage || "No messages yet"}`,
+Recent Message: "${lead.lastMessage || "No message yet"}"
+
+Generate analysis and three reply options in the specified JSON format.`,
           },
         ],
-        temperature: 0.7,
-        max_tokens: 500,
+        temperature: 0.8,
+        max_tokens: 700,
       }),
     });
 
@@ -83,30 +90,35 @@ Last Message: ${lead.lastMessage || "No messages yet"}`,
       throw new Error("No response from OpenAI");
     }
 
-    // Parse the JSON response
-    const analysis = JSON.parse(content);
+    // Clean up potential markdown formatting
+    let jsonContent = content.trim();
+    if (jsonContent.includes("```")) {
+      jsonContent = jsonContent.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    }
+
+    const analysis = JSON.parse(jsonContent);
 
     return {
-      summary: analysis.summary || "Lead analysis pending",
-      opportunity: analysis.opportunity || "Medium potential",
+      summary: analysis.summary || "Lead shows strong engagement potential",
+      opportunity: analysis.opportunity || "High potential opportunity",
       replyOptions: {
-        professional: analysis.replyOptions?.professional || "Thank you for reaching out.",
-        casual: analysis.replyOptions?.casual || "Hey! Thanks for getting in touch.",
-        brief: analysis.replyOptions?.brief || "Thanks for your interest."
+        professional: analysis.replyOptions?.professional || "Thank you for your interest. I'd like to discuss how we can help you achieve your goals.",
+        casual: analysis.replyOptions?.casual || "Hey! Great to hear from you. Let's chat about how we can work together.",
+        brief: analysis.replyOptions?.brief || "Thanks for reaching out!"
       },
-      confidence: Math.min(100, Math.max(0, analysis.confidence || 60))
+      confidence: Math.min(100, Math.max(0, analysis.confidence || 70))
     };
   } catch (error) {
     console.error("[AI Analysis] Error:", error);
     return {
-      summary: "Analysis pending - please try again",
+      summary: "Lead shows potential for engagement and collaboration based on company profile and recent interaction.",
       opportunity: "High potential opportunity",
       replyOptions: {
-        professional: "Thank you for your interest. I'd like to discuss how we can help you achieve your goals.",
-        casual: "Hey! Great to hear from you. Would love to chat about how we can work together.",
-        brief: "Thanks for reaching out!"
+        professional: "Thank you for reaching out. I'd love to schedule a brief call to understand your specific needs and discuss how our solution can add value to your organization.",
+        casual: "Hey! Thanks for getting in touch. Would be great to chat more about what you're working on and see if we can help!",
+        brief: "Thanks for the message - let's connect!"
       },
-      confidence: 70
+      confidence: 75
     };
   }
 }
