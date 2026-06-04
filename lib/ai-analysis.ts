@@ -49,10 +49,10 @@ function normalizeAnalysis(raw: Partial<AnalysisResult>, fallback: AnalysisResul
     reply: textOrFallback(raw.reply, fallback.reply),
     objections: Array.isArray(raw.objections) ? raw.objections : fallback.objections,
     replyOptions: {
-      short: textOrFallback(replyOptions.short, fallback.replyOptions.short),
-      professional: textOrFallback(replyOptions.professional, fallback.replyOptions.professional),
-      sales: textOrFallback(replyOptions.sales, fallback.replyOptions.sales),
-      closing: textOrFallback(replyOptions.closing, fallback.replyOptions.closing)
+      short: textOrFallback(replyOptions?.short, fallback.replyOptions.short ?? ""),
+      professional: textOrFallback(replyOptions?.professional, fallback.replyOptions.professional ?? ""),
+      sales: textOrFallback(replyOptions?.sales, fallback.replyOptions.sales ?? ""),
+      closing: textOrFallback(replyOptions?.closing, fallback.replyOptions.closing ?? "")
     },
     provider: raw.provider ?? fallback.provider
   };
