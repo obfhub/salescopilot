@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { getRequestedWorkspaceId } from "@/lib/auth";
-import { QueryMode } from "@prisma/client";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -51,7 +50,7 @@ async function findOrCreateLead(
 
   const orConditions = [
     { slug },
-    { name: { contains: firstName, mode: QueryMode.insensitive } },
+    { name: { contains: firstName, mode: "insensitive" as const } },
     ...(phone ? [{ phone }] : [])
   ];
 
