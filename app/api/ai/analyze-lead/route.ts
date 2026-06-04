@@ -51,7 +51,7 @@ async function generateAnalysis(lead: AnalysisRequest): Promise<AnalysisResponse
           },
           {
             role: "user",
-            content: `Lead: ${lead.leadName} at ${lead.company} (${lead.position}). Interest: ${lead.interest || "General"}. Message: "${lead.lastMessage || "No message}"`. Generate personalized sales analysis and replies.`,
+            content: `Lead: ${lead.leadName} at ${lead.company} (${lead.position}). Interest: ${lead.interest || "General"}. Message: "${lead.lastMessage || "No message"}". Generate personalized sales analysis and replies.`,
           },
         ],
         temperature: 0.7,
