@@ -1,5 +1,4 @@
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
 
 export async function GET(request: Request) {
   console.log("[Telegram Setup] Setup endpoint called");
@@ -11,15 +10,10 @@ export async function GET(request: Request) {
     );
   }
 
-  if (!APP_URL) {
-    return Response.json(
-      { ok: false, error: "APP_URL not configured" },
-      { status: 500 }
-    );
-  }
-
   try {
-    const webhookUrl = `${APP_URL}/api/telegram/webhook`;
+    // Get the origin from the request
+    const origin = new URL(request.url).origin;
+    const webhookUrl = `${origin}/api/telegram/webhook`;
     console.log(`[Telegram Setup] Setting webhook URL: ${webhookUrl}`);
 
     const response = await fetch(
