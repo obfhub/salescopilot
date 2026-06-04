@@ -94,20 +94,26 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
   }
 
   function improveTone(key: ReplyKey) {
-    if (!replyOptions) return;
-    setReplyOptions((current) => ({
-      ...current!,
-      [key]: `${current![key]} I will keep the next step clear, practical, and tailored to your team's workflow.`
-    }));
+    if (!replyOptions || !replyOptions[key]) return;
+    setReplyOptions((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        [key]: `${current[key]} I will keep the next step clear, practical, and tailored to your team's workflow.`
+      };
+    });
     notify("Tone improved");
   }
 
   function makeShorter(key: ReplyKey) {
-    if (!replyOptions) return;
-    setReplyOptions((current) => ({
-      ...current!,
-      [key]: current![key].split(".").slice(0, 2).join(".").trim() + "."
-    }));
+    if (!replyOptions || !replyOptions[key]) return;
+    setReplyOptions((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        [key]: (current[key] || "").split(".").slice(0, 2).join(".").trim() + "."
+      };
+    });
     notify("Reply shortened");
   }
 
