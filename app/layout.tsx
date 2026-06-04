@@ -7,7 +7,7 @@ import { DemoModeProvider } from "@/contexts/demo-mode-context";
 
 export const metadata: Metadata = {
   title: "AI Sales Copilot",
-  description: "Premium mock SaaS for AI-assisted sales teams"
+  description: "AI-assisted sales command center"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

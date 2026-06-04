@@ -26,7 +26,7 @@ export default function SimulatorPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-white">Incoming Message Simulator</h1>
-        <p className="mt-2 text-sm text-slate-300">Paste a customer message and test how the mock AI classifies sales intent.</p>
+        <p className="mt-2 text-sm text-slate-300">Paste a customer message and test how the sales AI classifies intent.</p>
       </div>
 
       <Card>

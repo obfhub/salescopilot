@@ -12,8 +12,10 @@ import { Select } from "@/components/ui/input";
 import { ProbabilityBar } from "@/components/progress-ring";
 import { useToast } from "@/components/toast-provider";
 import { updateLeadStage } from "@/app/actions";
+import { useDemoMode } from "@/contexts/demo-mode-context";
 
 export function PipelineClient({ initialLeads, databaseReady }: { initialLeads: Lead[]; databaseReady: boolean }) {
+  const { isDemoMode } = useDemoMode();
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [isPending, startTransition] = useTransition();
   const { notify } = useToast();
@@ -48,6 +50,8 @@ export function PipelineClient({ initialLeads, databaseReady }: { initialLeads: 
     });
   }
 
+  const leadHref = (id: string) => (isDemoMode ? `/leads/${id}?demo=1` : `/leads/${id}`);
+
   return (
     <div className="space-y-6">
       <div>
@@ -67,7 +71,7 @@ export function PipelineClient({ initialLeads, databaseReady }: { initialLeads: 
                 <Card key={lead.id} className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <Link href={`/leads/${lead.id}`} className="font-semibold text-white hover:text-cyan-200">
+                      <Link href={leadHref(lead.id)} className="font-semibold text-white hover:text-cyan-200">
                         {lead.name}
                       </Link>
                       <div className="text-xs text-slate-400">{lead.company}</div>
@@ -108,6 +112,12 @@ export function PipelineClient({ initialLeads, databaseReady }: { initialLeads: 
           </section>
         ))}
       </div>
+      {!leads.length ? (
+        <Card className="p-12 text-center">
+          <div className="text-lg font-semibold text-white">No pipeline leads yet</div>
+          <p className="mt-2 text-sm text-slate-400">Create leads from the Capture page or turn on Demo to preview the sample pipeline.</p>
+        </Card>
+      ) : null}
     </div>
   );
 }

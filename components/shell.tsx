@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { BarChart3, Bot, Inbox, Kanban, LayoutDashboard, LogOut, Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useDemoMode } from "@/contexts/demo-mode-context";
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -26,7 +27,9 @@ function initialsFrom(value: string) {
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
+  const { isDemoMode, setDemoMode } = useDemoMode();
 
   const isAuthRoute = authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
   if (isAuthRoute) {
@@ -35,6 +38,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const displayName = session?.user?.name || session?.user?.email || "Account";
   const initials = initialsFrom(displayName);
+  const withDemo = (href: string) => (isDemoMode ? `${href}?demo=1` : href);
+
+  function updateDemoMode(enabled: boolean) {
+    setDemoMode(enabled);
+    const params = new URLSearchParams(window.location.search);
+    if (enabled) {
+      params.set("demo", "1");
+    } else {
+      params.delete("demo");
+    }
+
+    const targetPath = pathname.startsWith("/leads/") ? "/" : pathname;
+    const query = params.toString();
+    router.push(`${targetPath}${query ? `?${query}` : ""}`);
+  }
 
   return (
     <div className="min-h-screen lg:flex">
@@ -55,7 +73,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={withDemo(item.href)}
                 className={cn(
                   "flex min-w-fit items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-white/8 hover:text-white",
                   active && "bg-white/12 text-white shadow-soft"
@@ -73,7 +91,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <BarChart3 className="h-4 w-4 text-cyan-300" />
               AI Copilot active
             </div>
-            <p className="text-sm leading-6 text-slate-300">Mock intelligence is scoring leads, drafting replies, and guiding the pipeline.</p>
+            <p className="text-sm leading-6 text-slate-300">Live intelligence is scoring leads, drafting replies, and guiding the pipeline.</p>
           </div>
         </div>
       </aside>
@@ -81,9 +99,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-line bg-night/72 px-4 backdrop-blur-xl sm:px-6 lg:h-20 lg:px-8">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Premium MVP</div>
-            <div className="text-sm text-slate-400">Mock data, local persistence, investor-ready workflow</div>
+            <div className="text-sm text-slate-400">Live database, AI analysis, investor-ready workflow</div>
           </div>
           <div className="flex items-center gap-3">
+            <label className="flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-line bg-white/5 px-3 text-sm font-semibold text-slate-200 transition hover:bg-white/8">
+              <input
+                type="checkbox"
+                checked={isDemoMode}
+                onChange={(event) => updateDemoMode(event.target.checked)}
+                className="h-4 w-4 accent-cyan-300"
+              />
+              Demo
+            </label>
             <Badge tone="green">AI Copilot active</Badge>
             <div className="hidden text-right sm:block">
               <div className="text-sm font-semibold text-white">{displayName}</div>

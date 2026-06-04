@@ -1,7 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { mockLeads } from "../lib/mock-data";
-import { messageTypeToDb, sourceToDb, stageToDb, statusToDb, temperatureToDb } from "../lib/db-mapping";
 
 const prisma = new PrismaClient();
 
@@ -75,95 +73,7 @@ async function main() {
     });
   }
 
-  for (const lead of mockLeads) {
-    const assignedUserId = lead.assignedManager === "Sarah Mitchell" ? sarah.id : alex.id;
-
-    await prisma.lead.upsert({
-      where: { workspaceId_slug: { workspaceId: workspace.id, slug: lead.id } },
-      update: {
-        assignedUserId,
-        name: lead.name,
-        company: lead.company,
-        position: lead.position,
-        email: lead.email,
-        phone: lead.phone,
-        source: sourceToDb(lead.source),
-        status: statusToDb(lead.status),
-        pipelineStage: stageToDb(lead.pipelineStage),
-        interest: lead.interest,
-        temperature: temperatureToDb(lead.temperature),
-        purchaseProbability: lead.purchaseProbability,
-        dealValue: lead.dealValue,
-        lastMessage: lead.lastMessage,
-        lastContactDate: new Date(`${lead.lastContactDate}T09:00:00.000Z`)
-      },
-      create: {
-        slug: lead.id,
-        workspaceId: workspace.id,
-        assignedUserId,
-        name: lead.name,
-        company: lead.company,
-        position: lead.position,
-        email: lead.email,
-        phone: lead.phone,
-        source: sourceToDb(lead.source),
-        status: statusToDb(lead.status),
-        pipelineStage: stageToDb(lead.pipelineStage),
-        interest: lead.interest,
-        temperature: temperatureToDb(lead.temperature),
-        purchaseProbability: lead.purchaseProbability,
-        dealValue: lead.dealValue,
-        lastMessage: lead.lastMessage,
-        lastContactDate: new Date(`${lead.lastContactDate}T09:00:00.000Z`),
-        messages: {
-          create: lead.messageHistory.map((message, index) => ({
-            author: message.author,
-            sentAt: new Date(`2026-05-30T09:${String(20 + index * 7).padStart(2, "0")}:00.000Z`),
-            type: messageTypeToDb(message.type),
-            text: message.text
-          }))
-        },
-        tasks: {
-          create: lead.tasks.map((task) => ({
-            label: task.label,
-            completed: task.completed,
-            completedAt: task.completed ? new Date("2026-05-30T14:00:00.000Z") : null
-          }))
-        },
-        notes: {
-          create: lead.notes.map((note) => ({
-            authorId: assignedUserId,
-            text: note.text,
-            createdAt: new Date("2026-05-30T10:15:00.000Z")
-          }))
-        },
-        analysis: {
-          create: {
-            customerType: lead.aiAnalysis.customerType,
-            intent: lead.aiAnalysis.intent,
-            interestLevel: lead.aiAnalysis.interestLevel,
-            urgency: lead.aiAnalysis.urgency,
-            budgetReadiness: lead.aiAnalysis.budgetReadiness,
-            mainNeed: lead.aiAnalysis.mainNeed,
-            painPoint: lead.aiAnalysis.painPoint,
-            objection: lead.aiAnalysis.objection,
-            lossRisk: lead.aiAnalysis.lossRisk,
-            recommendedStage: stageToDb(lead.aiAnalysis.recommendedStage),
-            nextBestAction: lead.aiAnalysis.nextBestAction,
-            confidence: lead.aiAnalysis.confidence,
-            summary: lead.aiAnalysis.summary,
-            reply: lead.aiAnalysis.reply,
-            replyShort: lead.aiAnalysis.replyOptions?.short ?? "",
-            replyProfessional: lead.aiAnalysis.replyOptions?.professional ?? "",
-            replySales: lead.aiAnalysis.replyOptions?.sales ?? "",
-            replyClosing: lead.aiAnalysis.replyOptions?.closing ?? ""
-          }
-        }
-      }
-    });
-  }
-
-  console.log(`Seeded workspace ${workspace.id} with ${mockLeads.length} leads.`);
+  console.log(`Seeded workspace ${workspace.id} with users and settings.`);
 }
 
 main()

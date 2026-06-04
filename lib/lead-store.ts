@@ -1,7 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import type { Lead, Message, Note, Task } from "@/types";
-import { mockLeads } from "@/lib/mock-data";
 import { prisma } from "@/lib/prisma";
+import { analyzeMessage } from "@/lib/analyze-message";
 import { messageTypeFromDb, sourceFromDb, stageFromDb, statusFromDb, temperatureFromDb } from "@/lib/db-mapping";
 import { getRequestedWorkspaceId, requireWorkspaceAccess } from "@/lib/auth";
 
@@ -35,7 +35,7 @@ function formatTime(date: Date) {
 
 function mapLead(row: NonNullDbLead): Lead {
   const analysis = row.analysis;
-  const fallbackAnalysis = mockLeads.find((lead) => lead.id === row.slug)?.aiAnalysis ?? mockLeads[0].aiAnalysis;
+  const fallbackAnalysis = analyzeMessage(row.lastMessage);
 
   return {
     id: row.slug,
@@ -100,7 +100,7 @@ function mapLead(row: NonNullDbLead): Lead {
 
 export async function getLeads(): Promise<Lead[]> {
   noStore();
-  if (!databaseConfigured()) return mockLeads;
+  if (!databaseConfigured()) return [];
 
   try {
     const auth = await requireWorkspaceAccess("sales");
@@ -112,14 +112,14 @@ export async function getLeads(): Promise<Lead[]> {
 
     return rows.map(mapLead);
   } catch (error) {
-    console.error("Database lead list read failed. Falling back to mock data.", error);
-    return mockLeads;
+    console.error("Database lead list read failed.", error);
+    return [];
   }
 }
 
 export async function getLeadBySlug(slug: string): Promise<Lead | undefined> {
   noStore();
-  if (!databaseConfigured()) return mockLeads.find((lead) => lead.id === slug);
+  if (!databaseConfigured()) return undefined;
 
   try {
     const auth = await requireWorkspaceAccess("sales");
@@ -130,7 +130,7 @@ export async function getLeadBySlug(slug: string): Promise<Lead | undefined> {
 
     return row ? mapLead(row) : undefined;
   } catch (error) {
-    console.error(`Database lead read failed for ${slug}. Falling back to mock data.`, error);
-    return mockLeads.find((lead) => lead.id === slug);
+    console.error(`Database lead read failed for ${slug}.`, error);
+    return undefined;
   }
 }

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
 import { ProbabilityBar } from "@/components/progress-ring";
+import { useDemoMode } from "@/contexts/demo-mode-context";
 
 const statusOptions: Array<LeadStatus | "All"> = ["All", "New", "Contacted", "Qualified", "Won", "Lost", "Waiting"];
 const tempOptions: Array<Temperature | "All"> = ["All", "Hot", "Warm", "Cold"];
@@ -20,6 +21,7 @@ const toneForTemp = (temperature: Temperature) => (temperature === "Hot" ? "rose
 const toneForStatus = (status: LeadStatus) => (status === "Won" ? "green" : status === "Waiting" ? "amber" : status === "Lost" ? "rose" : "cyan");
 
 export function DashboardClient({ leads }: { leads: Lead[] }) {
+  const { isDemoMode } = useDemoMode();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<LeadStatus | "All">("All");
   const [temperature, setTemperature] = useState<Temperature | "All">("All");
@@ -45,6 +47,7 @@ export function DashboardClient({ leads }: { leads: Lead[] }) {
   const waiting = leads.filter((lead) => lead.status === "Waiting").length;
   const won = leads.filter((lead) => lead.status === "Won").length;
   const revenue = leads.reduce((sum, lead) => sum + lead.dealValue, 0);
+  const hasLeads = leads.length > 0;
 
   const kpis = [
     ["Total Leads", leads.length.toString(), "Across seven acquisition sources"],
@@ -53,9 +56,10 @@ export function DashboardClient({ leads }: { leads: Lead[] }) {
     ["Waiting for Reply", waiting.toString(), "Need manager attention"],
     ["Conversion Rate", `${Math.round((won / Math.max(leads.length, 1)) * 100)}%`, "Won from current dataset"],
     ["Potential Revenue", formatCurrency(revenue), "Weighted pipeline opportunity"],
-    ["Average Response Time", "11m", "AI-assisted draft speed"],
-    ["AI Recommendations Today", "38", "Next actions generated"]
+    ["Average Response Time", hasLeads ? "11m" : "N/A", "AI-assisted draft speed"],
+    ["AI Recommendations Today", hasLeads ? String(Math.max(leads.length * 3, hot)) : "0", "Next actions generated"]
   ];
+  const leadHref = (id: string) => (isDemoMode ? `/leads/${id}?demo=1` : `/leads/${id}`);
 
   return (
     <div className="space-y-6">
@@ -145,7 +149,7 @@ export function DashboardClient({ leads }: { leads: Lead[] }) {
                   <td className="max-w-xs px-4 py-4 text-slate-300">{lead.aiAnalysis.nextBestAction}</td>
                   <td className="px-4 py-4">
                     <Link
-                      href={`/leads/${lead.id}`}
+                      href={leadHref(lead.id)}
                       className="inline-flex h-9 items-center justify-center rounded-lg border border-line bg-white/8 px-3 text-sm font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:bg-white/12"
                     >
                       Open
@@ -159,8 +163,10 @@ export function DashboardClient({ leads }: { leads: Lead[] }) {
 
         {!filtered.length ? (
           <div className="p-12 text-center">
-            <div className="text-lg font-semibold text-white">No leads match these filters</div>
-            <p className="mt-2 text-sm text-slate-400">Try clearing one filter or searching for another customer signal.</p>
+            <div className="text-lg font-semibold text-white">{leads.length ? "No leads match these filters" : "No leads yet"}</div>
+            <p className="mt-2 text-sm text-slate-400">
+              {leads.length ? "Try clearing one filter or searching for another customer signal." : "Create leads from the Capture page or turn on Demo to preview sample data."}
+            </p>
           </div>
         ) : null}
       </Card>

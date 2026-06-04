@@ -13,11 +13,13 @@ import { Textarea } from "@/components/ui/input";
 import { ProbabilityBar } from "@/components/progress-ring";
 import { useToast } from "@/components/toast-provider";
 import { useAiAnalysis } from "@/hooks/use-ai-analysis";
+import { useDemoMode } from "@/contexts/demo-mode-context";
 
 type ReplyKey = keyof AiAnalysis["replyOptions"];
 
 export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databaseReady: boolean }) {
   const { notify } = useToast();
+  const { isDemoMode } = useDemoMode();
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<Note[]>(lead?.notes ?? []);
   const [tasks, setTasks] = useState<Task[]>(lead?.tasks ?? []);
@@ -38,12 +40,13 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
   const [replyOptions, setReplyOptions] = useState<AiAnalysis["replyOptions"] | undefined>(
     analysis?.replyOptions ?? lead?.aiAnalysis.replyOptions
   );
+  const dashboardHref = isDemoMode ? "/?demo=1" : "/";
 
   if (!lead || !replyOptions) {
     return (
       <Card>
         <h1 className="text-xl font-bold text-white">Lead not found</h1>
-        <Link href="/" className="mt-4 inline-flex text-sm font-semibold text-cyan-200">
+        <Link href={dashboardHref} className="mt-4 inline-flex text-sm font-semibold text-cyan-200">
           Back to dashboard
         </Link>
       </Card>
@@ -119,7 +122,7 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
 
   return (
     <div className="space-y-6">
-      <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-200 hover:text-cyan-100">
+      <Link href={dashboardHref} className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-200 hover:text-cyan-100">
         <ArrowLeft className="h-4 w-4" />
         Back to dashboard
       </Link>
