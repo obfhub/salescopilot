@@ -37,51 +37,41 @@ async function generateAnalysis(lead: AnalysisRequest): Promise<AnalysisResponse
         messages: [
           {
             role: "system",
-            content: `You are a professional AI sales assistant. Analyze leads and generate personalized sales responses.
-
-IMPORTANT: Respond ONLY with valid JSON. Do NOT include markdown formatting or explanations.
-
-JSON format:
+            content: `You are a sales analyst. Generate JSON response ONLY.
 {
-  "summary": "2-3 sentence analysis of lead potential and key factors",
-  "opportunity": "Opportunity assessment (e.g., 'High-value enterprise lead' or 'Warm mid-market prospect')",
+  "summary": "2-3 sentence analysis",
+  "opportunity": "Assessment",
   "confidence": 75,
   "replyOptions": {
-    "professional": "Formal professional response (2-3 sentences, appropriate for executive audience)",
-    "casual": "Friendly conversational response (2-3 sentences, relationship-building tone)",
-    "brief": "Single sentence concise response"
+    "professional": "Professional response (2-3 sentences)",
+    "casual": "Casual response (2-3 sentences)",
+    "brief": "One sentence response"
   }
-}
-
-Make replies specific to their company, role, and needs. Reference details from their profile.`,
+}`,
           },
           {
             role: "user",
-            content: `Analyze this lead and generate personalized responses:
-
-Name: ${lead.leadName}
-Company: ${lead.company}
-Position: ${lead.position}
-Interest: ${lead.interest || "General inquiry"}
-Temperature: ${lead.temperature || "Warm"}
-Recent Message: "${lead.lastMessage || "No message yet"}"
-
-Generate analysis and three reply options in the specified JSON format.`,
+            content: `Lead: ${lead.leadName} at ${lead.company} (${lead.position}). Interest: ${lead.interest || "General"}. Message: "${lead.lastMessage || "No message}"`. Generate personalized sales analysis and replies.`,
           },
         ],
-        temperature: 0.8,
-        max_tokens: 700,
+        temperature: 0.7,
+        max_tokens: 500,
       }),
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("[AI Analysis] OpenAI error:", response.status, errorData);
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
-      throw new Error("No response from OpenAI");
+      throw new Error("No content in OpenAI response");
     }
 
-    // Clean up potential markdown formatting
     let jsonContent = content.trim();
     if (jsonContent.includes("```")) {
       jsonContent = jsonContent.replace(/```json\n?/g, "").replace(/```\n?/g, "");
@@ -90,12 +80,12 @@ Generate analysis and three reply options in the specified JSON format.`,
     const analysis = JSON.parse(jsonContent);
 
     return {
-      summary: analysis.summary || "Lead shows strong engagement potential",
-      opportunity: analysis.opportunity || "High potential opportunity",
+      summary: analysis.summary || "Lead analysis pending",
+      opportunity: analysis.opportunity || "Medium potential",
       replyOptions: {
-        professional: analysis.replyOptions?.professional || "Thank you for your interest. I'd like to discuss how we can help you achieve your goals.",
-        casual: analysis.replyOptions?.casual || "Hey! Great to hear from you. Let's chat about how we can work together.",
-        brief: analysis.replyOptions?.brief || "Thanks for reaching out!"
+        professional: analysis.replyOptions?.professional || "Thank you for reaching out.",
+        casual: analysis.replyOptions?.casual || "Hey! Thanks for getting in touch.",
+        brief: analysis.replyOptions?.brief || "Thanks for your interest."
       },
       confidence: Math.min(100, Math.max(0, analysis.confidence || 70))
     };
@@ -118,7 +108,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[AI Analysis] Request error:", error);
     return Response.json(
-      { error: "Failed to analyze lead" },
+      { error: error instanceof Error ? error.message : "Failed to analyze lead" },
       { status: 500 }
     );
   }

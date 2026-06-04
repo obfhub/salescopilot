@@ -1,5 +1,8 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import type { AiAnalysis } from "@/types";
+import { useDemoMode } from "@/contexts/demo-mode-context";
 
 interface AnalysisInput {
   leadName: string;
@@ -10,7 +13,31 @@ interface AnalysisInput {
   temperature?: string;
 }
 
+const DEMO_ANALYSIS: AiAnalysis = {
+  summary: "Strong prospect with clear interest in sales automation. Multiple incoming requests indicate active pipeline. Warm temperature suggests receptiveness.",
+  opportunity: "High-value B2B SaaS opportunity - enterprise sales workflow optimization",
+  replyOptions: {
+    professional: "Thank you for reaching out. I'd love to schedule a brief call to understand your specific workflow challenges and discuss how our platform can streamline your sales process.",
+    casual: "Hey! Thanks for getting in touch. Would be great to chat about your sales automation needs and show you what we're building.",
+    brief: "Definitely! Let's set up a quick call this week."
+  },
+  confidence: 85,
+  customerType: "Enterprise",
+  intent: "Sales automation",
+  interestLevel: "High",
+  urgency: "High",
+  budgetReadiness: "Yes",
+  mainNeed: "Coordinate sales team workflow",
+  painPoint: "Response speed is becoming a business risk",
+  objection: "No clear objection detected",
+  lossRisk: "Low",
+  recommendedStage: "Qualification",
+  nextBestAction: "Schedule discovery call",
+  reply: "Thank you for reaching out. I'd love to schedule a brief call to understand your specific workflow challenges and discuss how our platform can streamline your sales process."
+};
+
 export function useAiAnalysis(lead: AnalysisInput | undefined) {
+  const { isDemoMode } = useDemoMode();
   const [analysis, setAnalysis] = useState<AiAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,32 +50,26 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
       setError(null);
 
       try {
-        console.log("[AI Analysis] Fetching analysis for:", lead.leadName);
+        // Use demo mode if enabled
+        if (isDemoMode) {
+          console.log("[AI Analysis] Using demo mode for:", lead.leadName);
+          setAnalysis(DEMO_ANALYSIS);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("[AI Analysis] Fetching real analysis for:", lead.leadName);
         const response = await fetch("/api/ai/analyze-lead", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(lead),
         });
 
-        console.log("[AI Analysis] Response status:", response.status);
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error("[AI Analysis] Response error:", errorText);
           throw new Error(`API error: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log("[AI Analysis] Analysis received:", data);
-        
-        // Verify we have real reply options (not the fallback ones)
-        const hasRealReplies = data.replyOptions?.professional && 
-                               !data.replyOptions.professional.includes("Thank you for your interest. I'd like to discuss how we can help");
-        
-        if (hasRealReplies) {
-          console.log("[AI Analysis] Using AI-generated replies");
-        } else {
-          console.warn("[AI Analysis] Using fallback replies - API may have failed");
-        }
 
         setAnalysis({
           summary: data.summary,
@@ -79,7 +100,7 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
     };
 
     fetchAnalysis();
-  }, [lead?.leadName, lead?.company, lead?.position]);
+  }, [lead?.leadName, lead?.company, lead?.position, isDemoMode]);
 
   return { analysis, isLoading, error };
 }
