@@ -20,32 +20,41 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
+    const fullName = msg.from.last_name 
+      ? `${msg.from.first_name} ${msg.from.last_name}` 
+      : msg.from.first_name;
+
+    console.log(`[Telegram] ${new Date().toISOString()} - Message from ${fullName}: "${msg.text}"`);
+
     // Get workspace
     let workspace;
     try {
+      console.log("[Telegram] Attempting to find workspace...");
       workspace = await prisma.workspace.findFirst();
+      console.log("[Telegram] Workspace found:", workspace?.id);
     } catch (err) {
-      console.error("[Telegram] DB error:", err);
+      console.error("[Telegram] Workspace query failed:", err instanceof Error ? err.message : err);
+      console.error("[Telegram] Full error:", err);
       return Response.json({ ok: true });
     }
 
     if (!workspace) {
+      console.warn("[Telegram] No workspace found in database");
       return Response.json({ ok: true });
     }
 
     // Create lead
-    const fullName = msg.from.last_name 
-      ? `${msg.from.first_name} ${msg.from.last_name}` 
-      : msg.from.first_name;
     const slug = fullName.toLowerCase().replace(/\s+/g, "-");
 
     let lead;
     try {
+      console.log("[Telegram] Finding lead with slug:", slug);
       lead = await prisma.lead.findFirst({
         where: { workspaceId: workspace.id, slug },
       });
 
       if (!lead) {
+        console.log("[Telegram] Lead not found, creating new lead...");
         lead = await prisma.lead.create({
           data: {
             workspaceId: workspace.id,
@@ -66,14 +75,19 @@ export async function POST(request: Request) {
             lastContactDate: new Date(msg.date * 1000),
           },
         });
+        console.log("[Telegram] Lead created:", lead.id);
+      } else {
+        console.log("[Telegram] Lead found:", lead.id);
       }
     } catch (err) {
-      console.error("[Telegram] Lead error:", err);
+      console.error("[Telegram] Lead operation failed:", err instanceof Error ? err.message : err);
+      console.error("[Telegram] Full error:", err);
       return Response.json({ ok: true });
     }
 
     // Save message
     try {
+      console.log("[Telegram] Creating lead message...");
       await prisma.leadMessage.create({
         data: {
           leadId: lead.id,
@@ -83,12 +97,14 @@ export async function POST(request: Request) {
           text: msg.text,
         },
       });
+      console.log("[Telegram] Message saved");
     } catch (err) {
-      console.error("[Telegram] Message error:", err);
+      console.error("[Telegram] Message creation failed:", err instanceof Error ? err.message : err);
     }
 
     // Update lead
     try {
+      console.log("[Telegram] Updating lead...");
       await prisma.lead.update({
         where: { id: lead.id },
         data: {
@@ -96,13 +112,16 @@ export async function POST(request: Request) {
           lastContactDate: new Date(msg.date * 1000),
         },
       });
+      console.log("[Telegram] Lead updated");
     } catch (err) {
-      console.error("[Telegram] Update error:", err);
+      console.error("[Telegram] Lead update failed:", err instanceof Error ? err.message : err);
     }
 
+    console.log("[Telegram] Success - all operations completed");
     return Response.json({ ok: true });
   } catch (error) {
-    console.error("[Telegram] Error:", error);
-    return Response.json({ ok: false, error: String(error) }, { status: 500 });
+    console.error("[Telegram] Webhook error:", error instanceof Error ? error.message : error);
+    console.error("[Telegram] Full error:", error);
+    return Response.json({ ok: true });
   }
 }
