@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlertTriangle, Save } from "lucide-react";
+import { AlertTriangle, Save, MessageCircle, Loader2 } from "lucide-react";
 import { saveWorkspaceSettings } from "@/app/actions";
+import { registerTelegramWebhook } from "@/app/auth-actions";
 import type { Settings } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { useToast } from "@/components/toast-provider";
 export function SettingsClient({ initialSettings, databaseReady }: { initialSettings: Settings; databaseReady: boolean }) {
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [isPending, startTransition] = useTransition();
+  const [isTelegramLoading, setIsTelegramLoading] = useState(false);
   const { notify } = useToast();
 
   function update<K extends keyof Settings>(key: K, value: Settings[K]) {
@@ -25,6 +27,30 @@ export function SettingsClient({ initialSettings, databaseReady }: { initialSett
         notify(databaseReady ? "Settings saved" : "Configure DATABASE_URL to persist settings");
       } catch (error) {
         notify(error instanceof Error ? error.message : "Could not save settings");
+      }
+    });
+  }
+
+  function setupTelegram() {
+    if (!settings.telegramToken) {
+      notify("Please enter a Telegram bot token first");
+      return;
+    }
+
+    setIsTelegramLoading(true);
+    startTransition(async () => {
+      try {
+        const result = await registerTelegramWebhook(settings.telegramToken);
+        if (result.ok) {
+          notify(result.message || "Telegram webhook registered successfully");
+          await saveWorkspaceSettings(settings);
+        } else {
+          notify(result.error || "Failed to register Telegram webhook");
+        }
+      } catch (error) {
+        notify(error instanceof Error ? error.message : "Error setting up Telegram");
+      } finally {
+        setIsTelegramLoading(false);
       }
     });
   }
@@ -93,6 +119,58 @@ export function SettingsClient({ initialSettings, databaseReady }: { initialSett
             <Save className="h-4 w-4" />
             Save Settings
           </Button>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="mb-1 flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-cyan-300" />
+              <h3 className="text-lg font-bold text-white">Telegram Integration</h3>
+            </div>
+            <p className="text-sm text-slate-400">
+              Connect your Telegram bot to receive customer messages and sync them as leads. Messages will be matched to existing leads by name or phone number.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-2">
+          <label className="block space-y-1.5 text-sm text-slate-300">
+            <span className="font-semibold">Bot Token</span>
+            <Input
+              type="password"
+              placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+              value={settings.telegramToken}
+              onChange={(event) => update("telegramToken", event.target.value)}
+            />
+            <span className="text-xs text-slate-500">Create a bot at @BotFather on Telegram</span>
+          </label>
+        </div>
+
+        <div className="mt-6 flex gap-3">
+          <Button
+            disabled={isTelegramLoading || !settings.telegramToken || !databaseReady}
+            onClick={setupTelegram}
+            variant="primary"
+          >
+            {isTelegramLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
+            Register Webhook
+          </Button>
+          <Button disabled={isPending} onClick={save} variant="secondary">
+            <Save className="h-4 w-4" />
+            Save Settings
+          </Button>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900/50 p-3 text-xs text-slate-400">
+          <div className="mb-2 font-semibold text-slate-300">How it works:</div>
+          <ol className="space-y-1 pl-4 list-decimal">
+            <li>Users message your Telegram bot</li>
+            <li>Messages are synced as lead messages</li>
+            <li>New leads are auto-created if no match found</li>
+            <li>Messages appear in the lead detail view</li>
+          </ol>
         </div>
       </Card>
     </div>

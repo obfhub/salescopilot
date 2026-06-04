@@ -145,3 +145,67 @@ export async function resetPassword(input: unknown): Promise<ActionResult> {
     return { ok: false, error: "Could not reset password. Please try again." };
   }
 }
+
+export async function registerTelegramWebhook(botToken: string): Promise<ActionResult> {
+  if (!process.env.DATABASE_URL || !process.env.AUTH_URL) {
+    return { ok: false, error: "Configuration incomplete (missing AUTH_URL)." };
+  }
+
+  try {
+    const auth = await import("@/lib/auth").then((m) => m.requireWorkspaceAccess("admin"));
+
+    const webhookUrl = `${process.env.AUTH_URL}/api/telegram/webhook`;
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: webhookUrl, allowed_updates: ["message"] })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return { ok: false, error: `Telegram error: ${error.description || "Unknown error"}` };
+    }
+
+    const data = await response.json();
+    if (!data.ok) {
+      return { ok: false, error: `Telegram API error: ${data.description}` };
+    }
+
+    const workspace = await prisma.workspace.findUnique({ where: { id: auth.workspaceId } });
+    if (!workspace) {
+      return { ok: false, error: "Workspace not found." };
+    }
+
+    let settings = await prisma.workspaceSetting.findUnique({
+      where: { workspaceId: auth.workspaceId }
+    });
+
+    if (settings) {
+      settings = await prisma.workspaceSetting.update({
+        where: { workspaceId: auth.workspaceId },
+        data: { telegramToken: botToken }
+      });
+    } else {
+      settings = await prisma.workspaceSetting.create({
+        data: {
+          workspaceId: auth.workspaceId,
+          telegramToken: botToken,
+          companyName: workspace.name,
+          managerName: "Manager",
+          replyTone: "professional",
+          currency: "USD",
+          language: "English"
+        }
+      });
+    }
+
+    return {
+      ok: true,
+      message: `Telegram bot registered. Webhook: ${webhookUrl}`
+    };
+  } catch (error) {
+    console.error("registerTelegramWebhook failed.", error);
+    return { ok: false, error: "Could not register Telegram webhook. Please try again." };
+  }
+}
