@@ -1,0 +1,54 @@
+12:04:21.630 Running build in Washington, D.C., USA (East) – iad1
+12:04:21.636 Build machine configuration: 2 cores, 8 GB
+12:04:21.857 Cloning github.com/obfhub/salescopilot (Branch: main, Commit: 81f1ee1)
+12:04:22.484 Cloning completed: 627.000ms
+12:04:24.335 Restored build cache from previous deployment (AqG9EbS5Hv3Gw35GkNXksJpnbmdV)
+12:04:24.676 Running "vercel build"
+12:04:24.697 Vercel CLI 54.7.1
+12:04:24.973 Installing dependencies...
+12:04:25.838 
+12:04:25.839 > ai-sales-copilot@0.1.0 postinstall
+12:04:25.839 > prisma generate
+12:04:25.839 
+12:04:26.660 warn The configuration property `package.json#prisma` is deprecated and will be removed in Prisma 7. Please migrate to a Prisma config file (e.g., `prisma.config.ts`).
+12:04:26.661 For more information, see: https://pris.ly/prisma-config
+12:04:26.662 
+12:04:26.778 Prisma schema loaded from prisma/schema.prisma
+12:04:27.254 
+12:04:27.255 ✔ Generated Prisma Client (v6.19.0) to ./node_modules/@prisma/client in 273ms
+12:04:27.255 
+12:04:27.255 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+12:04:27.255 
+12:04:27.255 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+12:04:27.256 
+12:04:27.279 
+12:04:27.279 up to date in 2s
+12:04:27.279 
+12:04:27.280 38 packages are looking for funding
+12:04:27.280   run `npm fund` for details
+12:04:27.312 Detected Next.js version: 15.5.19
+12:04:27.315 Running "npm run build"
+12:04:27.417 
+12:04:27.418 > ai-sales-copilot@0.1.0 build
+12:04:27.418 > next build
+12:04:27.418 
+12:04:28.167    ▲ Next.js 15.5.19
+12:04:28.167 
+12:04:28.202    Creating an optimized production build ...
+12:04:37.429  ✓ Compiled successfully in 6.7s
+12:04:37.432    Linting and checking validity of types ...
+12:04:44.168 Failed to compile.
+12:04:44.169 
+12:04:44.170 ./prisma/seed.ts:156:13
+12:04:44.170 Type error: Type 'string | undefined' is not assignable to type 'string'.
+12:04:44.170   Type 'undefined' is not assignable to type 'string'.
+12:04:44.171 
+12:04:44.171   154 |             summary: lead.aiAnalysis.summary,
+12:04:44.171   155 |             reply: lead.aiAnalysis.reply,
+12:04:44.171 > 156 |             replyShort: lead.aiAnalysis.replyOptions.short,
+12:04:44.171       |             ^
+12:04:44.171   157 |             replyProfessional: lead.aiAnalysis.replyOptions.professional,
+12:04:44.172   158 |             replySales: lead.aiAnalysis.replyOptions.sales,
+12:04:44.172   159 |             replyClosing: lead.aiAnalysis.replyOptions.closing
+12:04:44.203 Next.js build worker exited with code: 1 and signal: null
+12:04:44.237 Error: Command "npm run build" exited with 1

@@ -153,10 +153,10 @@ async function main() {
             confidence: lead.aiAnalysis.confidence,
             summary: lead.aiAnalysis.summary,
             reply: lead.aiAnalysis.reply,
-            replyShort: lead.aiAnalysis.replyOptions.short,
-            replyProfessional: lead.aiAnalysis.replyOptions.professional,
-            replySales: lead.aiAnalysis.replyOptions.sales,
-            replyClosing: lead.aiAnalysis.replyOptions.closing
+            replyShort: lead.aiAnalysis.replyOptions?.short ?? "",
+            replyProfessional: lead.aiAnalysis.replyOptions?.professional ?? "",
+            replySales: lead.aiAnalysis.replyOptions?.sales ?? "",
+            replyClosing: lead.aiAnalysis.replyOptions?.closing ?? ""
           }
         }
       }
