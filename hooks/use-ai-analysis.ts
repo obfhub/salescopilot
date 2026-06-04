@@ -23,17 +23,33 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
       setError(null);
 
       try {
+        console.log("[AI Analysis] Fetching analysis for:", lead.leadName);
         const response = await fetch("/api/ai/analyze-lead", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(lead),
         });
 
+        console.log("[AI Analysis] Response status:", response.status);
         if (!response.ok) {
-          throw new Error("Failed to analyze lead");
+          const errorText = await response.text();
+          console.error("[AI Analysis] Response error:", errorText);
+          throw new Error(`API error: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log("[AI Analysis] Analysis received:", data);
+        
+        // Verify we have real reply options (not the fallback ones)
+        const hasRealReplies = data.replyOptions?.professional && 
+                               !data.replyOptions.professional.includes("Thank you for your interest. I'd like to discuss how we can help");
+        
+        if (hasRealReplies) {
+          console.log("[AI Analysis] Using AI-generated replies");
+        } else {
+          console.warn("[AI Analysis] Using fallback replies - API may have failed");
+        }
+
         setAnalysis({
           summary: data.summary,
           opportunity: data.opportunity,
@@ -53,7 +69,9 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
           reply: data.replyOptions?.professional || "",
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        console.error("[AI Analysis] Error:", errorMessage);
+        setError(errorMessage);
         // Return mock data on error
         setAnalysis({
           summary: "Unable to generate analysis at this time.",
