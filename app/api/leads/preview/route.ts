@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { createCapturedLead } from "@/lib/lead-ingestion";
+import { previewCapturedLead } from "@/lib/lead-ingestion";
 
 export async function POST(request: Request) {
   try {
@@ -11,20 +11,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid JSON request body." }, { status: 400 });
     }
 
-    const result = await createCapturedLead(body);
+    const result = await previewCapturedLead(body);
 
     return NextResponse.json({
       ok: true,
-      leadId: result.leadId,
       analysis: {
+        provider: result.analysis.provider,
         temperature: result.analysis.temperature,
         score: result.analysis.score,
         summary: result.analysis.summary,
         intent: result.analysis.intent,
         urgency: result.analysis.urgency,
-        confidence: result.analysis.confidence,
+        interestLevel: result.analysis.interestLevel,
+        budgetReadiness: result.analysis.budgetReadiness,
+        mainNeed: result.analysis.mainNeed,
+        painPoint: result.analysis.painPoint,
+        objection: result.analysis.objection,
+        lossRisk: result.analysis.lossRisk,
         recommendedStage: result.analysis.recommendedStage,
         nextBestAction: result.analysis.nextBestAction,
+        confidence: result.analysis.confidence,
         reply: result.analysis.reply,
         replyOptions: result.analysis.replyOptions
       }
@@ -34,7 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: error.issues[0]?.message ?? "Invalid lead data." }, { status: 400 });
     }
 
-    console.error("Lead capture failed.", error);
-    return NextResponse.json({ ok: false, error: "Could not create lead." }, { status: 500 });
+    console.error("Lead preview failed.", error);
+    return NextResponse.json({ ok: false, error: "Could not analyze this conversation." }, { status: 500 });
   }
 }

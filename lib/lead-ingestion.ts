@@ -3,16 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { analyzeLeadMessage } from "@/lib/ai-analysis";
 import { sendEmail } from "@/lib/email";
 import { sourceToDb, stageToDb, temperatureToDb } from "@/lib/db-mapping";
-import { getRequestedWorkspaceId } from "@/lib/auth";
+import { requireWorkspaceAccess } from "@/lib/auth";
 import type { LeadSource } from "@/types";
 
 export const leadCaptureSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  company: z.string().trim().min(2).max(120),
+  company: z.string().trim().max(120).optional().default(""),
   position: z.string().trim().max(120).optional().default("Decision maker"),
-  email: z.string().trim().email(),
+  email: z.union([z.string().trim().email(), z.literal("")]).optional().default(""),
   phone: z.string().trim().max(40).optional().default(""),
-  source: z.enum(["Telegram", "Instagram", "Website", "Facebook", "Referral", "Manual", "WhatsApp"]).default("Website"),
+  source: z.enum(["Telegram", "Instagram", "Website", "Facebook", "Referral", "Manual", "WhatsApp"]).default("Manual"),
   interest: z.string().trim().min(2).max(160).default("Sales automation"),
   message: z.string().trim().min(10).max(4000),
   dealValue: z.coerce.number().int().min(0).max(10000000).optional().default(0)
@@ -36,19 +36,26 @@ async function getDefaultAssignee(workspaceId: string) {
   return member?.user ?? null;
 }
 
+export async function previewCapturedLead(input: unknown) {
+  const data = leadCaptureSchema.parse(input);
+  const company = data.company || "Unknown company";
+  const context = `Name: ${data.name}. Company: ${company}. Position: ${data.position}. Interest: ${data.interest}. Source: ${data.source}.`;
+  const analysis = await analyzeLeadMessage(data.message, context);
+  return { data: { ...data, company }, analysis };
+}
+
 export async function createCapturedLead(input: unknown) {
   if (!process.env.DATABASE_URL) {
     throw new Error("Database is not configured.");
   }
 
-  const data = leadCaptureSchema.parse(input);
-  const workspaceId = getRequestedWorkspaceId();
+  const { data, analysis } = await previewCapturedLead(input);
+  const auth = await requireWorkspaceAccess("sales");
+  const workspaceId = auth.workspaceId;
   const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
   if (!workspace) throw new Error(`Workspace ${workspaceId} was not found.`);
 
-  const assignee = await getDefaultAssignee(workspaceId);
-  const context = `Name: ${data.name}. Company: ${data.company}. Position: ${data.position}. Interest: ${data.interest}. Source: ${data.source}.`;
-  const analysis = await analyzeLeadMessage(data.message, context);
+  const assignee = (await prisma.user.findUnique({ where: { id: auth.userId } })) ?? (await getDefaultAssignee(workspaceId));
   const stage = analysis.recommendedStage;
   const now = new Date();
 
