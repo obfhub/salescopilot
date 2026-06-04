@@ -80,12 +80,10 @@ export async function POST(request: Request) {
     const update: TelegramUpdate = await request.json();
     console.log("[Telegram] Update:", update.update_id);
 
-    if (!update.message?.text || !update.message.from) {
+    const msg = update.message;
+    if (!msg?.text || !msg?.from || msg.from.is_bot) {
       return Response.json({ ok: true });
     }
-
-    const msg = update.message;
-    if (msg.from.is_bot) return Response.json({ ok: true });
 
     console.log(`[Telegram] Message from ${msg.from.first_name}: ${msg.text}`);
 
