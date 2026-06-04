@@ -3,6 +3,7 @@ import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 import { Shell } from "@/components/shell";
 import { ToastProvider } from "@/components/toast-provider";
+import { DemoModeProvider } from "@/contexts/demo-mode-context";
 
 export const metadata: Metadata = {
   title: "AI Sales Copilot",
@@ -14,9 +15,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <SessionProvider>
-          <ToastProvider>
-            <Shell>{children}</Shell>
-          </ToastProvider>
+          <DemoModeProvider>
+            <ToastProvider>
+              <Shell>{children}</Shell>
+            </ToastProvider>
+          </DemoModeProvider>
         </SessionProvider>
       </body>
     </html>
