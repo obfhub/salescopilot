@@ -55,6 +55,7 @@ export type AiAnalysis = {
   confidence: number;
   summary: string;
   reply: string;
+  provider?: "mock" | "openai";
   opportunity?: string;
   replyOptions: {
     short?: string;

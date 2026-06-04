@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { ArrowLeft, Check, Copy, PenLine, Scissors, Send, Loader } from "lucide-react";
 import { addLeadNote, updateTaskState } from "@/app/actions";
 import { formatCurrency } from "@/lib/utils";
@@ -26,7 +26,7 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
   const [isPending, startTransition] = useTransition();
   
   // Use real AI analysis
-  const { analysis, isLoading: aiLoading } = useAiAnalysis(
+  const { analysis, isLoading: aiLoading, error: aiError } = useAiAnalysis(
     lead ? {
       leadName: lead.name,
       company: lead.company,
@@ -41,6 +41,12 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
     analysis?.replyOptions ?? lead?.aiAnalysis.replyOptions
   );
   const dashboardHref = isDemoMode ? "/?demo=1" : "/";
+
+  useEffect(() => {
+    if (analysis?.replyOptions) {
+      setReplyOptions(analysis.replyOptions);
+    }
+  }, [analysis?.replyOptions]);
 
   if (!lead || !replyOptions) {
     return (
@@ -226,14 +232,14 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {[
               ["Opportunity", analysis?.opportunity ?? lead.aiAnalysis.intent],
-              ["Interest level", lead.aiAnalysis.interestLevel],
-              ["Urgency", lead.aiAnalysis.urgency],
-              ["Budget readiness", lead.aiAnalysis.budgetReadiness],
-              ["Main need", lead.aiAnalysis.mainNeed],
-              ["Pain point", lead.aiAnalysis.painPoint],
-              ["Possible objection", lead.aiAnalysis.objection],
-              ["Lead loss risk", lead.aiAnalysis.lossRisk],
-              ["Recommended next step", lead.aiAnalysis.nextBestAction],
+              ["Interest level", analysis?.interestLevel ?? lead.aiAnalysis.interestLevel],
+              ["Urgency", analysis?.urgency ?? lead.aiAnalysis.urgency],
+              ["Budget readiness", analysis?.budgetReadiness ?? lead.aiAnalysis.budgetReadiness],
+              ["Main need", analysis?.mainNeed ?? lead.aiAnalysis.mainNeed],
+              ["Pain point", analysis?.painPoint ?? lead.aiAnalysis.painPoint],
+              ["Possible objection", analysis?.objection ?? lead.aiAnalysis.objection],
+              ["Lead loss risk", analysis?.lossRisk ?? lead.aiAnalysis.lossRisk],
+              ["Recommended next step", analysis?.nextBestAction ?? lead.aiAnalysis.nextBestAction],
               ["AI confidence score", `${analysis?.confidence ?? lead.aiAnalysis.confidence}%`]
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg border border-line bg-white/5 p-3">
@@ -246,7 +252,13 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
       </section>
 
         <Card>
-          <h2 className="text-lg font-bold text-white">AI Reply Options</h2>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-lg font-bold text-white">{analysis?.provider === "openai" ? "AI Reply Options" : "Saved Reply Options"}</h2>
+            <Badge tone={analysis?.provider === "openai" ? "green" : "amber"}>
+              {analysis?.provider === "openai" ? "Live AI" : aiLoading ? "Generating" : "Live AI unavailable"}
+            </Badge>
+          </div>
+          {aiError ? <p className="mt-2 text-sm text-amber-200">{aiError}</p> : null}
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             {(Object.entries(replyOptions || {}).filter(([, text]) => text) as Array<[ReplyKey, string]>).map(([key, text]) => (
               <div key={key} className="rounded-lg border border-line bg-white/5 p-4">

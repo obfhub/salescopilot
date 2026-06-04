@@ -66,7 +66,8 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
         });
 
         if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.error || `API error: ${response.status}`);
         }
 
         const data = await response.json();
@@ -76,18 +77,19 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
           opportunity: data.opportunity,
           replyOptions: data.replyOptions,
           confidence: data.confidence,
-          customerType: "prospect",
-          intent: data.opportunity || "Unknown",
-          interestLevel: "Medium",
-          urgency: "Medium",
-          budgetReadiness: "Unknown",
-          mainNeed: data.summary,
-          painPoint: "Unknown",
-          objection: "Unknown",
-          lossRisk: "Low",
-          recommendedStage: "New Lead",
-          nextBestAction: "Follow up",
-          reply: data.replyOptions?.professional || "",
+          provider: data.provider,
+          customerType: data.customerType || "prospect",
+          intent: data.intent || data.opportunity || "Unknown",
+          interestLevel: data.interestLevel || "Medium",
+          urgency: data.urgency || "Medium",
+          budgetReadiness: data.budgetReadiness || "Unknown",
+          mainNeed: data.mainNeed || data.summary,
+          painPoint: data.painPoint || "Unknown",
+          objection: data.objection || "Unknown",
+          lossRisk: data.lossRisk || "Low",
+          recommendedStage: data.recommendedStage || "New Lead",
+          nextBestAction: data.nextBestAction || "Follow up",
+          reply: data.reply || data.replyOptions?.professional || "",
         });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
@@ -100,7 +102,7 @@ export function useAiAnalysis(lead: AnalysisInput | undefined) {
     };
 
     fetchAnalysis();
-  }, [lead?.leadName, lead?.company, lead?.position, isDemoMode]);
+  }, [lead?.leadName, lead?.company, lead?.position, lead?.lastMessage, lead?.interest, lead?.temperature, isDemoMode]);
 
   return { analysis, isLoading, error };
 }

@@ -150,14 +150,19 @@ async function analyzeWithOpenAI(message: string, context: string): Promise<Part
   return analyzeWithResponses(apiUrl, messages);
 }
 
-export async function analyzeLeadMessage(message: string, context = ""): Promise<AnalysisResult> {
+export async function analyzeLeadMessage(message: string, context = "", options: { allowFallback?: boolean } = {}): Promise<AnalysisResult> {
+  const allowFallback = options.allowFallback ?? true;
   const fallback = { ...analyzeMessage(message), provider: "mock" as const };
 
   try {
     const openAiResult = await analyzeWithOpenAI(message, context);
-    if (!openAiResult) return fallback;
+    if (!openAiResult) {
+      if (!allowFallback) throw new Error("Live AI provider is not configured.");
+      return fallback;
+    }
     return normalizeAnalysis({ ...openAiResult, provider: "openai" }, fallback);
   } catch (error) {
+    if (!allowFallback) throw error;
     console.error("OpenAI lead analysis failed. Falling back to mock analysis.", error);
     return fallback;
   }
