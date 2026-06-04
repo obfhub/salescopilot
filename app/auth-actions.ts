@@ -178,7 +178,7 @@ export async function registerTelegramWebhook(botToken: string): Promise<ActionR
   try {
     const auth = await import("@/lib/auth").then((m) => m.requireWorkspaceAccess("admin"));
 
-    const webhookUrl = `${process.env.AUTH_URL}/api/telegram/webhook`;
+    const webhookUrl = `${process.env.AUTH_URL}/api/telegram/webhook?workspaceId=${encodeURIComponent(auth.workspaceId)}`;
 
     const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
       method: "POST",
@@ -223,6 +223,12 @@ export async function registerTelegramWebhook(botToken: string): Promise<ActionR
         }
       });
     }
+
+    await prisma.integration.upsert({
+      where: { workspaceId_provider: { workspaceId: auth.workspaceId, provider: "telegram" } },
+      update: { status: "connected", lastSyncAt: new Date() },
+      create: { workspaceId: auth.workspaceId, provider: "telegram", status: "connected", lastSyncAt: new Date() }
+    });
 
     return {
       ok: true,
