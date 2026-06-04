@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { databaseConfigured } from "@/lib/lead-store";
 import { stageToDb } from "@/lib/db-mapping";
-import { pipelineStages } from "@/lib/mock-data";
+import { pipelineStages } from "@/lib/demo-data";
 import { requireWorkspaceAccess } from "@/lib/auth";
 
 const stageSchema = z.object({

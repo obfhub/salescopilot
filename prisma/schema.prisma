@@ -211,8 +211,8 @@ model AiAnalysis {
   replyProfessional String
   replySales        String
   replyClosing      String
-  modelProvider     String        @default("mock")
-  promptVersion     String        @default("mock-v1")
+  modelProvider     String        @default("backup")
+  promptVersion     String        @default("backup-v1")
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   lead              Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)

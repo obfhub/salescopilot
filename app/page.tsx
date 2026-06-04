@@ -1,12 +1,12 @@
 import { DashboardClient } from "@/components/dashboard-client";
-import { mockLeads } from "@/lib/mock-data";
+import { demoLeads } from "@/lib/demo-data";
 import { isDemoSearch, type SearchParams } from "@/lib/demo-mode";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage({ searchParams }: { searchParams: SearchParams }) {
   const demoMode = await isDemoSearch(searchParams);
-  let leads = demoMode ? mockLeads : [];
+  let leads = demoMode ? demoLeads : [];
 
   if (!demoMode) {
     try {

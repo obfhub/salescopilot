@@ -1,5 +1,5 @@
 import { LeadDetailsClient } from "@/components/lead-details-client";
-import { mockLeads } from "@/lib/mock-data";
+import { demoLeads } from "@/lib/demo-data";
 import { isDemoSearch, type SearchParams } from "@/lib/demo-mode";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function LeadDetailsPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SearchParams }) {
   const { id } = await params;
   const demoMode = await isDemoSearch(searchParams);
-  let lead = demoMode ? mockLeads.find((item) => item.id === id) : undefined;
+  let lead = demoMode ? demoLeads.find((item) => item.id === id) : undefined;
   let databaseReady = !demoMode && Boolean(process.env.DATABASE_URL);
 
   if (!demoMode) {

@@ -5,7 +5,7 @@ type AnalysisResult = AiAnalysis & {
   score: number;
   temperature: Temperature;
   objections: string[];
-  provider: "mock" | "openai";
+  provider: "backup" | "openai";
 };
 
 type ChatMessage = {
@@ -152,7 +152,7 @@ async function analyzeWithOpenAI(message: string, context: string): Promise<Part
 
 export async function analyzeLeadMessage(message: string, context = "", options: { allowFallback?: boolean } = {}): Promise<AnalysisResult> {
   const allowFallback = options.allowFallback ?? true;
-  const fallback = { ...analyzeMessage(message), provider: "mock" as const };
+  const fallback = { ...analyzeMessage(message), provider: "backup" as const };
 
   try {
     const openAiResult = await analyzeWithOpenAI(message, context);
@@ -163,7 +163,7 @@ export async function analyzeLeadMessage(message: string, context = "", options:
     return normalizeAnalysis({ ...openAiResult, provider: "openai" }, fallback);
   } catch (error) {
     if (!allowFallback) throw error;
-    console.error("OpenAI lead analysis failed. Falling back to mock analysis.", error);
+    console.error("Live AI analysis failed. Using backup analysis.", error);
     return fallback;
   }
 }

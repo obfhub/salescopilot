@@ -126,7 +126,7 @@ export async function POST(request: Request) {
                 replySales: analysis.replyOptions.sales ?? "",
                 replyClosing: analysis.replyOptions.closing ?? "",
                 modelProvider: analysis.provider,
-                promptVersion: analysis.provider === "openai" ? "openai-v1" : "mock-v1"
+                promptVersion: analysis.provider === "openai" ? "openai-v1" : "backup-v1"
               }
             }
           },

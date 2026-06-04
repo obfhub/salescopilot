@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowDownWideNarrow, Search, Zap } from "lucide-react";
-import { leadSources } from "@/lib/mock-data";
+import { leadSources } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils";
 import type { Lead, LeadSource, LeadStatus, Temperature } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +56,7 @@ export function DashboardClient({ leads }: { leads: Lead[] }) {
     ["Waiting for Reply", waiting.toString(), "Need manager attention"],
     ["Conversion Rate", `${Math.round((won / Math.max(leads.length, 1)) * 100)}%`, "Won from current dataset"],
     ["Potential Revenue", formatCurrency(revenue), "Weighted pipeline opportunity"],
-    ["Average Response Time", hasLeads ? "11m" : "N/A", "AI-assisted draft speed"],
+    ["Average Response Time", hasLeads ? "11m" : "N/A", "Reply drafting speed"],
     ["AI Recommendations Today", hasLeads ? String(Math.max(leads.length * 3, hot)) : "0", "Next actions generated"]
   ];
   const leadHref = (id: string) => (isDemoMode ? `/leads/${id}?demo=1` : `/leads/${id}`);
@@ -72,7 +72,7 @@ export function DashboardClient({ leads }: { leads: Lead[] }) {
         </div>
         <Badge tone="cyan" className="w-fit gap-2">
           <Zap className="h-3.5 w-3.5" />
-          Database-ready intelligence
+          Live workspace
         </Badge>
       </section>
 
@@ -165,7 +165,7 @@ export function DashboardClient({ leads }: { leads: Lead[] }) {
           <div className="p-12 text-center">
             <div className="text-lg font-semibold text-white">{leads.length ? "No leads match these filters" : "No leads yet"}</div>
             <p className="mt-2 text-sm text-slate-400">
-              {leads.length ? "Try clearing one filter or searching for another customer signal." : "Create leads from the Capture page or turn on Demo to preview sample data."}
+              {leads.length ? "Try clearing one filter or searching for another customer signal." : "Create your first lead from Capture, or enable Demo for a guided preview."}
             </p>
           </div>
         ) : null}

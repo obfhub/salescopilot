@@ -254,9 +254,9 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
 
         <Card>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-bold text-white">{analysis?.provider === "openai" ? "AI Reply Options" : "Saved Reply Options"}</h2>
+            <h2 className="text-lg font-bold text-white">{analysis?.provider === "openai" ? "AI Reply Options" : "Reply Options"}</h2>
             <Badge tone={analysis?.provider === "openai" ? "green" : "amber"}>
-              {analysis?.provider === "openai" ? "Live AI" : aiLoading ? "Generating" : "Live AI unavailable"}
+              {analysis?.provider === "openai" ? "Live AI" : aiLoading ? "Generating" : "Backup Analysis"}
             </Badge>
           </div>
           {aiError ? <p className="mt-2 text-sm text-amber-200">{aiError}</p> : null}
@@ -270,7 +270,7 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
                   <Copy className="h-4 w-4" />
                   Copy
                 </Button>
-                <Button variant="secondary" onClick={() => notify("Reply inserted into mock composer")}>
+                <Button variant="secondary" onClick={() => notify("Reply ready to use")}>
                   <Send className="h-4 w-4" />
                   Use
                 </Button>

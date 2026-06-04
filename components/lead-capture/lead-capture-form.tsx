@@ -16,7 +16,7 @@ type ReplyOptions = {
 };
 
 type CaptureAnalysis = {
-  provider?: "mock" | "openai";
+  provider?: "backup" | "openai";
   temperature: string;
   score: number;
   summary: string;
@@ -326,7 +326,7 @@ export function LeadCaptureForm() {
             <h2 className="text-lg font-bold text-white">AI Analysis and Suggested Replies</h2>
             <p className="mt-1 text-sm text-slate-400">Suggestions are based on the full manual transcript.</p>
           </div>
-          {analysis ? <Badge tone={analysis.provider === "openai" ? "green" : "amber"}>{analysis.provider === "openai" ? "Live AI" : "Fallback"}</Badge> : null}
+          {analysis ? <Badge tone={analysis.provider === "openai" ? "green" : "amber"}>{analysis.provider === "openai" ? "Live AI" : "Backup Analysis"}</Badge> : null}
         </div>
 
         {!analysis ? (

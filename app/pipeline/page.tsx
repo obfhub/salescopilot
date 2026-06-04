@@ -1,12 +1,12 @@
 import { PipelineClient } from "@/components/pipeline-client";
-import { mockLeads } from "@/lib/mock-data";
+import { demoLeads } from "@/lib/demo-data";
 import { isDemoSearch, type SearchParams } from "@/lib/demo-mode";
 
 export const dynamic = "force-dynamic";
 
 export default async function PipelinePage({ searchParams }: { searchParams: SearchParams }) {
   const demoMode = await isDemoSearch(searchParams);
-  let leads = demoMode ? mockLeads : [];
+  let leads = demoMode ? demoLeads : [];
   let databaseReady = false;
 
   if (!demoMode) {

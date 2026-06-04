@@ -187,7 +187,7 @@ export const pipelineStages: PipelineStage[] = [
 
 export const leadSources: LeadSource[] = ["Telegram", "Instagram", "Website", "Facebook", "Referral", "Manual", "WhatsApp"];
 
-export const mockLeads: Lead[] = profiles.map((profile, index) => {
+export const demoLeads: Lead[] = profiles.map((profile, index) => {
   const analysis = analyzeMessage(profile.lastMessage);
   return {
     ...profile,

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { BarChart3, Bot, Inbox, Kanban, LayoutDashboard, LogOut, Settings, Sparkles } from "lucide-react";
+import { BarChart3, Inbox, Kanban, LayoutDashboard, LogOut, Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useDemoMode } from "@/contexts/demo-mode-context";
@@ -12,7 +12,6 @@ const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/capture", label: "Capture", icon: Inbox },
-  { href: "/simulator", label: "Simulator", icon: Bot },
   { href: "/settings", label: "Settings", icon: Settings }
 ];
 
@@ -89,17 +88,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="glass rounded-lg p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
               <BarChart3 className="h-4 w-4 text-cyan-300" />
-              AI Copilot active
+              Sales intelligence
             </div>
-            <p className="text-sm leading-6 text-slate-300">Live intelligence is scoring leads, drafting replies, and guiding the pipeline.</p>
+            <p className="text-sm leading-6 text-slate-300">Lead scoring, reply drafting, and pipeline guidance for active customer conversations.</p>
           </div>
         </div>
       </aside>
       <main className="min-w-0 flex-1">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-line bg-night/72 px-4 backdrop-blur-xl sm:px-6 lg:h-20 lg:px-8">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Premium MVP</div>
-            <div className="text-sm text-slate-400">Live database, AI analysis, investor-ready workflow</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">Production Workspace</div>
+            <div className="text-sm text-slate-400">Customer capture, AI analysis, and CRM pipeline</div>
           </div>
           <div className="flex items-center gap-3">
             <label className="flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-line bg-white/5 px-3 text-sm font-semibold text-slate-200 transition hover:bg-white/8">

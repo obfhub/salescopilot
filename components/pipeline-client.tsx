@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { ArrowRight, Lightbulb } from "lucide-react";
-import { pipelineStages } from "@/lib/mock-data";
+import { pipelineStages } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils";
 import type { Lead, PipelineStage } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -115,7 +115,7 @@ export function PipelineClient({ initialLeads, databaseReady }: { initialLeads: 
       {!leads.length ? (
         <Card className="p-12 text-center">
           <div className="text-lg font-semibold text-white">No pipeline leads yet</div>
-          <p className="mt-2 text-sm text-slate-400">Create leads from the Capture page or turn on Demo to preview the sample pipeline.</p>
+          <p className="mt-2 text-sm text-slate-400">Create your first lead from Capture, or enable Demo for a guided pipeline preview.</p>
         </Card>
       ) : null}
     </div>

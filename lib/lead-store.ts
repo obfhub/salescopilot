@@ -107,7 +107,7 @@ function mapLead(row: NonNullDbLead): Lead {
           confidence: analysis.confidence,
           summary: analysis.summary,
           reply: analysis.reply,
-          provider: analysis.modelProvider === "openai" ? "openai" : "mock",
+          provider: analysis.modelProvider === "openai" ? "openai" : "backup",
           replyOptions: replyOptions ?? fallbackAnalysis.replyOptions
         }
       : fallbackAnalysis,
