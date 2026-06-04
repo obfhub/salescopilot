@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { ArrowLeft, Check, Copy, PenLine, Scissors, Send } from "lucide-react";
+import { ArrowLeft, Check, Copy, PenLine, Scissors, Send, Loader } from "lucide-react";
 import { addLeadNote, updateTaskState } from "@/app/actions";
 import { formatCurrency } from "@/lib/utils";
 import type { AiAnalysis, Lead, Note, Task } from "@/types";
@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/input";
 import { ProbabilityBar } from "@/components/progress-ring";
 import { useToast } from "@/components/toast-provider";
+import { useAiAnalysis } from "@/hooks/use-ai-analysis";
 
 type ReplyKey = keyof AiAnalysis["replyOptions"];
 
@@ -20,8 +21,23 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<Note[]>(lead?.notes ?? []);
   const [tasks, setTasks] = useState<Task[]>(lead?.tasks ?? []);
-  const [replyOptions, setReplyOptions] = useState<AiAnalysis["replyOptions"] | undefined>(lead?.aiAnalysis.replyOptions);
   const [isPending, startTransition] = useTransition();
+  
+  // Use real AI analysis
+  const { analysis, isLoading: aiLoading } = useAiAnalysis(
+    lead ? {
+      leadName: lead.name,
+      company: lead.company,
+      position: lead.position,
+      interest: lead.interest,
+      temperature: lead.temperature,
+      lastMessage: lead.lastMessage,
+    } : undefined
+  );
+  
+  const [replyOptions, setReplyOptions] = useState<AiAnalysis["replyOptions"] | undefined>(
+    analysis?.replyOptions ?? lead?.aiAnalysis.replyOptions
+  );
 
   if (!lead || !replyOptions) {
     return (
@@ -133,7 +149,7 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
               ["Email", lead.email],
               ["Phone", lead.phone],
               ["Interest", lead.interest],
-              ["AI confidence", `${lead.aiAnalysis.confidence}%`]
+              ["AI confidence", `${analysis?.confidence ?? lead.aiAnalysis.confidence}%`]
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg border border-line bg-white/5 p-3">
                 <div className="text-xs text-slate-500">{label}</div>
@@ -188,10 +204,19 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
 
         <Card>
           <h2 className="text-lg font-bold text-white">AI Sales Copilot Analysis</h2>
-          <p className="mt-3 rounded-lg border border-cyan-300/15 bg-cyan-300/8 p-4 text-sm leading-6 text-cyan-50">{lead.aiAnalysis.summary}</p>
+          <div className="mt-3 rounded-lg border border-cyan-300/15 bg-cyan-300/8 p-4 text-sm leading-6 text-cyan-50">
+            {aiLoading ? (
+              <div className="flex items-center gap-2 text-slate-400">
+                <Loader className="h-4 w-4 animate-spin" />
+                Analyzing lead with AI...
+              </div>
+            ) : (
+              <p>{analysis?.summary ?? lead.aiAnalysis.summary}</p>
+            )}
+          </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {[
-              ["Customer intent", lead.aiAnalysis.intent],
+              ["Opportunity", analysis?.opportunity ?? lead.aiAnalysis.intent],
               ["Interest level", lead.aiAnalysis.interestLevel],
               ["Urgency", lead.aiAnalysis.urgency],
               ["Budget readiness", lead.aiAnalysis.budgetReadiness],
@@ -200,7 +225,7 @@ export function LeadDetailsClient({ lead, databaseReady }: { lead?: Lead; databa
               ["Possible objection", lead.aiAnalysis.objection],
               ["Lead loss risk", lead.aiAnalysis.lossRisk],
               ["Recommended next step", lead.aiAnalysis.nextBestAction],
-              ["AI confidence score", `${lead.aiAnalysis.confidence}%`]
+              ["AI confidence score", `${analysis?.confidence ?? lead.aiAnalysis.confidence}%`]
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg border border-line bg-white/5 p-3">
                 <div className="text-xs text-slate-500">{label}</div>
