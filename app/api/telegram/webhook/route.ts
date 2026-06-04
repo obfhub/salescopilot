@@ -88,23 +88,39 @@ async function findOrCreateLead(
 }
 
 export async function POST(request: Request) {
+  console.log("[Telegram] Webhook received");
+  
   if (!BOT_TOKEN) {
+    console.error("[Telegram] BOT_TOKEN not configured");
     return Response.json({ ok: false, error: "TELEGRAM_BOT_TOKEN not configured" }, { status: 500 });
   }
 
   try {
     const update: TelegramUpdate = await request.json();
+    console.log("[Telegram] Update received:", JSON.stringify(update, null, 2));
 
     if (!update.message || !update.message.text) {
+      console.log("[Telegram] No message or text, skipping");
       return Response.json({ ok: true });
     }
 
     const msg = update.message;
     if (!msg.from || msg.from.is_bot) {
+      console.log("[Telegram] Message from bot or no sender, skipping");
       return Response.json({ ok: true });
     }
 
-    const workspaceId = getRequestedWorkspaceId();
+    console.log(`[Telegram] Processing message from ${msg.from.first_name}: "${msg.text}"`);
+
+    let workspaceId: string;
+    try {
+      workspaceId = getRequestedWorkspaceId();
+      console.log(`[Telegram] Workspace ID: ${workspaceId}`);
+    } catch (err) {
+      console.error("[Telegram] Failed to get workspace ID:", err);
+      // Use a default workspace or return error
+      return Response.json({ ok: false, error: "No workspace found" }, { status: 400 });
+    }
 
     const lead = await findOrCreateLead(
       workspaceId,
@@ -113,6 +129,7 @@ export async function POST(request: Request) {
       msg.from.last_name,
       msg.text
     );
+    console.log(`[Telegram] Lead created/found: ${lead.id}`);
 
     await prisma.leadMessage.create({
       data: {
@@ -123,6 +140,7 @@ export async function POST(request: Request) {
         text: msg.text || ""
       }
     });
+    console.log(`[Telegram] Message saved to lead`);
 
     await prisma.lead.update({
       where: { id: lead.id },
@@ -131,10 +149,11 @@ export async function POST(request: Request) {
         lastContactDate: new Date(msg.date * 1000)
       }
     });
+    console.log(`[Telegram] Lead updated successfully`);
 
     return Response.json({ ok: true });
   } catch (error) {
-    console.error("Telegram webhook error:", error);
+    console.error("[Telegram] Webhook error:", error);
     return Response.json({ ok: false, error: String(error) }, { status: 500 });
   }
 }
